@@ -102,6 +102,17 @@
 </div>
 </div>
 
+<h3>3.3 Our contributions (beyond the open-source tools)</h3>
+<p>COLMAP, Splatfacto and Spark do the heavy lifting. What we built is the part that makes them usable by a non-expert and reproducible:</p>
+<ul>
+  <li>The <b>capture SOP</b> and its failure-mode table.</li>
+  <li><b>Sharpness-based frame selection</b> and a <b>fail-fast quality gate</b>.</li>
+  <li><b>Pipeline automation</b> with isolated run folders, a COLMAP registration gate, fresh-output checks and automatic metrics.</li>
+  <li><b>Offline calibration estimates</b> (floor, bounds, start pose) written to a validated draft manifest.</li>
+  <li>An in-browser <b>calibration tool</b> with a floor-outline editor.</li>
+  <li>The <b>first-person viewer integration</b> with robust loading and error handling.</li>
+</ul>
+
 <h2>4. Technology choices</h2>
 <table>
 <tr><th style="width:17%">Layer</th><th style="width:22%">Choice</th><th>Justification (alternatives considered)</th></tr>
@@ -126,8 +137,8 @@
 <ul>
   <li><b>Start overlay</b> with a key legend. The Start button is enabled only once the model has decoded. The progress bar shows downloaded MB and percentage.</li>
   <li><b>Movement:</b> pointer-lock mouse-look (pitch clamped to ±85°) and WASD/arrow keys at 1.4 m/s (Shift 2×). Exponential velocity smoothing gives fluid starts and stops. The camera is held at floor + eye height (1.6 m, Q/E ±0.6 m).</li>
-  <li><b>Navigation bound:</b> the camera is clamped to the reconstructed footprint. This is explicitly <i>not</i> collision detection; splats have no surfaces.</li>
-  <li><b>Controls and robustness:</b> R reset, Esc pause and resume, an exit button, fullscreen, and a HUD (FPS, splats, size, load time, position). There is a drag-to-look fallback when pointer lock is refused. Clear error cards cover a missing manifest or model, HTML 404 fallbacks, no WebGL2, and GPU context loss. Responsive down to 375 px.</li>
+  <li><b>Navigation bound:</b> the camera stays inside a calibrated floor outline (point-in-polygon test with wall sliding), or a rectangle if no outline is set. This is explicitly <i>not</i> collision detection; splats have no surfaces.</li>
+  <li><b>Controls and robustness:</b> R reset, Esc pause and resume, an exit button, fullscreen, and a HUD (FPS, splats, size, load time, position). The manifest is validated field by field before loading. The download streams into a single preallocated buffer and has a stall timeout. Clear error cards cover an invalid or missing manifest or model, HTML 404 fallbacks, no WebGL2, and GPU context loss. Built for a desktop with keyboard and mouse; touch screens get drag-to-look and a notice.</li>
 </ul>
 </div>
 <div class="ph" style="height:150pt">PENDING: viewer screenshot on the deployed URL with the real model (overlay + walking view with HUD)</div>
@@ -141,7 +152,14 @@
 <tr><td>Registered cameras / used</td><td class="pending">PENDING</td><td>SOG size (web)</td><td class="pending">PENDING</td></tr>
 <tr><td>COLMAP time</td><td class="pending">PENDING</td><td>Load time / FPS (deployed)</td><td class="pending">PENDING</td></tr>
 </table>
-<p><b>Testing (already performed on test data, 2026-10-27):</b> frame extraction on a generated 10 s 1080p video (60 candidates → 20 frames at 1600×900; quality gate 20/0). A synthetic 79,102-splat room in nerfstudio's PLY layout (z-up) converted to SOG (151 KB) and loaded in the viewer. Holding W for 1.5 s moved the camera 2.11 m (expected about 2.1 m). The viewer showed correct error states for a missing manifest and a missing model. Calibration recovered the synthetic floor (0.0 m) and bounds. Layout at 375 px had no overflow. The production build loaded with no console errors. <b>Planned on the real model:</b> cold-cache load time and 60 s FPS in incognito on two browsers, plus a pointer-lock, Esc and resume check (see <code>test/README.md</code>).</p>
+<p><b>Testing performed on test data (2026-10-27/29):</b></p>
+<ul>
+  <li><b>Automated tests</b> (<code>npm test</code>, also in GitHub Actions CI with the production build): 19 JS tests for manifest validation and an L-shaped walk outline, and 5 Python tests for frame extraction, the quality gate (pass, fail and zero usable frames) and splat statistics with the draft manifest.</li>
+  <li><b>Pipeline gates on Windows:</b> each gate and failure path stops the run with a clear message.</li>
+  <li><b>Synthetic room:</b> 79,102 splats in nerfstudio's z-up PLY layout, converted to a 155,108-byte SOG. The draft manifest recovered its floor (0.0 m) and bounds exactly.</li>
+  <li><b>Viewer:</b> holding W for 1.5 s moved the camera 2.11 m (expected about 2.1 m). Invalid or missing manifests and models showed the correct errors.</li>
+</ul>
+<p><b>Planned on the real model:</b> cold-cache load time, peak memory and average and minimum FPS over a 60 s walk in incognito on two browsers, plus a pointer-lock, Esc and resume check.</p>
 
 <h2>8. Limitations, reproducibility and roadmap</h2>
 <div class="grid2">

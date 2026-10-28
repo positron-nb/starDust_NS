@@ -42,6 +42,7 @@
           <button id="retry" class="btn ghost" type="button">Retry</button>
         </div>
 
+        <p id="touch-note" class="touch-note" hidden>This walkthrough is built for a desktop or laptop with a keyboard and mouse. On a touch screen you can look around by dragging, but walking needs a keyboard.</p>
         <button id="start" class="btn primary" type="button" disabled>Start walkthrough</button>
 
         <ul class="keys" aria-label="Controls">
@@ -98,6 +99,12 @@
         <button id="c-start" class="btn ghost" type="button">Set start here</button>
         <button id="c-bounds" class="btn ghost" type="button">Fit bounds</button>
       </div>
+      <p class="hint">Walk area: stand at each floor corner in turn (walk with free-fly off) and add it. The outline replaces the rectangle.</p>
+      <div class="row">
+        <button id="c-poly-add" class="btn ghost" type="button">Add corner (<span id="c-poly-n">0</span>)</button>
+        <button id="c-poly-clear" class="btn ghost" type="button">Clear outline</button>
+      </div>
+      <label class="check"><input id="c-calibrated" type="checkbox" /> Mark as calibrated</label>
       <button id="c-copy" class="btn primary" type="button">Copy manifest JSON</button>
       <pre id="c-json" class="mono"></pre>
     </aside>

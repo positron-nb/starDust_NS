@@ -9,6 +9,9 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
+    "test": "npm run test:js && npm run test:py",
+    "test:js": "node --test test/js/manifest.test.mjs",
+    "test:py": "python -m unittest discover -s test/py -v",
     "convert": "splat-transform"
   },
   "dependencies": {

@@ -3,30 +3,19 @@
 // can be swapped in without touching this file (see README "Replacing the model").
 import * as THREE from "three";
 import { SparkRenderer, SplatMesh } from "@sparkjsdev/spark";
+import { DEFAULTS, constrainMove, percentileSorted, validateManifest } from "./manifest.js";
 
 const params = new URLSearchParams(location.search);
 const CALIBRATE = params.has("calibrate");
 const MANIFEST_URL = params.get("manifest") || "models/manifest.json";
 const MAX_DPR = Number(params.get("dpr")) || 1.5;
 
-const DEFAULTS = {
-  name: "Untitled room",
-  provenance: "unknown", // "reconstruction" | "synthetic"
-  file: "models/room.sog",
-  rotationDeg: [-90, 0, 0], // nerfstudio exports are z-up; three.js is y-up
-  scale: 1,
-  floorY: 0,
-  eyeHeight: 1.6,
-  walkSpeed: 1.4, // m/s, typical indoor walking pace
-  sprintMultiplier: 2,
-  start: { position: [0, 0], yawDeg: 0 },
-  bounds: null, // { min: [x, z], max: [x, z] } in world metres; null = derived from splats
-  background: "#07080b",
-};
-
 const LOOK_SENSITIVITY = 0.0022; // radians per pixel
 const PITCH_LIMIT = THREE.MathUtils.degToRad(85);
 const EYE_OFFSET_RANGE = [-0.8, 0.6];
+const STALL_TIMEOUT_MS = 30000; // abort a download that receives no bytes for this long
+const STATS_MAX_SAMPLES = 200000; // splat centres sampled for floor/bounds estimates
+const TOUCH_ONLY = matchMedia("(pointer: coarse)").matches && !matchMedia("(any-pointer: fine)").matches;
 
 // ---------- DOM ----------
 const $ = (id) => document.getElementById(id);
@@ -36,7 +25,7 @@ const ui = {
   error: $("error"), errorTitle: $("error-title"), errorDetail: $("error-detail"), retry: $("retry"),
   start: $("start"), modelName: $("model-name"), provenance: $("provenance"),
   hud: $("hud"), fps: $("hud-fps"), splats: $("hud-splats"), size: $("hud-size"), load: $("hud-load"),
-  pos: $("hud-pos"), mode: $("hud-mode"), toast: $("toast"),
+  pos: $("hud-pos"), mode: $("hud-mode"), toast: $("toast"), touchNote: $("touch-note"),
   btnReset: $("btn-reset"), btnExit: $("btn-exit"), btnFull: $("btn-fullscreen"), btnHud: $("btn-hud"),
 };
 
@@ -50,9 +39,10 @@ const state = {
   eyeOffset: 0,
   velocity: new THREE.Vector3(),
   fly: false,
-  bounds: null,
+  area: null, // { polygon } | { bounds } | null: soft navigation boundary, not collision
   loaded: false,
   dragging: false,
+  download: null, // AbortController of the in-flight model download
 };
 
 // ---------- Renderer ----------
@@ -84,6 +74,7 @@ ui.canvas.addEventListener("webglcontextlost", (e) => {
 
 // ---------- Loading ----------
 async function boot() {
+  ui.touchNote.hidden = !TOUCH_ONLY;
   setLoading("Fetching scene manifest…", null);
   ui.error.hidden = true;
   ui.start.disabled = true;
@@ -93,7 +84,14 @@ async function boot() {
     if ((res.headers.get("content-type") || "").includes("text/html")) {
       throw new LoadError(`${MANIFEST_URL} was not found (the server returned an HTML page). Check public/models/manifest.json.`);
     }
-    state.manifest = { ...DEFAULTS, ...(await res.json()) };
+    let raw;
+    try { raw = await res.json(); } catch (e) { throw new LoadError(`${MANIFEST_URL} is not valid JSON: ${e.message}`); }
+    const { manifest, errors, warnings } = validateManifest(raw);
+    for (const w of warnings) console.warn(`[namma-space] manifest: ${w}`);
+    if (errors.length) {
+      return fail("Scene manifest is invalid", new LoadError(`${MANIFEST_URL}: ${errors.join("; ")}`));
+    }
+    state.manifest = manifest;
   } catch (err) {
     return fail("Scene manifest missing", err);
   }
@@ -148,32 +146,67 @@ async function boot() {
   if (CALIBRATE) initCalibration();
 }
 
+// Streams the model with progress. When Content-Length is known (and the response is not
+// content-encoded) chunks are written straight into one preallocated buffer, so peak memory is
+// ~1x the file instead of chunks + a full copy. Aborts if no bytes arrive for STALL_TIMEOUT_MS,
+// and when a retry starts a new download.
 async function fetchWithProgress(url, onProgress) {
-  let res;
+  state.download?.abort();
+  const controller = new AbortController();
+  state.download = controller;
+  let stallTimer;
+  const armStall = () => {
+    clearTimeout(stallTimer);
+    stallTimer = setTimeout(() => controller.abort(new LoadError(`Download of ${url} stalled for ${STALL_TIMEOUT_MS / 1000} s.`)), STALL_TIMEOUT_MS);
+  };
+  armStall();
   try {
-    res = await fetch(url);
-  } catch (err) {
-    throw new LoadError(`Network error while requesting ${url}: ${err.message}`);
+    let res;
+    try {
+      res = await fetch(url, { signal: controller.signal });
+    } catch (err) {
+      throw controller.signal.reason instanceof LoadError ? controller.signal.reason
+        : new LoadError(`Network error while requesting ${url}: ${err.message}`);
+    }
+    if (!res.ok) throw new LoadError(`${url} returned HTTP ${res.status} ${res.statusText}. Check that the file exists in public/models and the path in manifest.json.`);
+    const type = res.headers.get("content-type") || "";
+    if (type.includes("text/html")) throw new LoadError(`${url} returned an HTML page instead of a splat file (likely a host fallback/404 page).`);
+    const encoded = !!res.headers.get("content-encoding");
+    const total = encoded ? 0 : Number(res.headers.get("content-length")) || 0;
+    if (!res.body) return new Uint8Array(await res.arrayBuffer());
+
+    const reader = res.body.getReader();
+    let buffer = total ? new Uint8Array(total) : null;
+    const chunks = [];
+    let loaded = 0;
+    for (;;) {
+      let result;
+      try {
+        result = await reader.read();
+      } catch (err) {
+        throw controller.signal.reason instanceof LoadError ? controller.signal.reason
+          : new LoadError(`Download of ${url} was interrupted: ${err.message}`);
+      }
+      if (result.done) break;
+      armStall();
+      const value = result.value;
+      if (buffer && loaded + value.byteLength <= buffer.byteLength) buffer.set(value, loaded);
+      else {
+        if (buffer) { chunks.push(buffer.subarray(0, loaded)); buffer = null; } // length header was wrong
+        chunks.push(value);
+      }
+      loaded += value.byteLength;
+      onProgress(loaded, total);
+    }
+    if (buffer) return loaded === buffer.byteLength ? buffer : buffer.subarray(0, loaded);
+    const out = new Uint8Array(loaded);
+    let offset = 0;
+    for (const c of chunks) { out.set(c, offset); offset += c.byteLength; }
+    return out;
+  } finally {
+    clearTimeout(stallTimer);
+    if (state.download === controller) state.download = null;
   }
-  if (!res.ok) throw new LoadError(`${url} returned HTTP ${res.status} ${res.statusText}. Check that the file exists in public/models and the path in manifest.json.`);
-  const type = res.headers.get("content-type") || "";
-  if (type.includes("text/html")) throw new LoadError(`${url} returned an HTML page instead of a splat file (likely a host fallback/404 page).`);
-  const total = Number(res.headers.get("content-length")) || 0;
-  if (!res.body) return new Uint8Array(await res.arrayBuffer());
-  const reader = res.body.getReader();
-  const chunks = [];
-  let loaded = 0;
-  for (;;) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    chunks.push(value);
-    loaded += value.byteLength;
-    onProgress(loaded, total > loaded ? total : 0);
-  }
-  const out = new Uint8Array(loaded);
-  let offset = 0;
-  for (const c of chunks) { out.set(c, offset); offset += c.byteLength; }
-  return out;
 }
 
 class LoadError extends Error {}
@@ -221,31 +254,40 @@ function applyTransform() {
 }
 
 // Robust world-space extents of splat centres (percentiles ignore stray floaters).
+// Uses a uniform sample of at most STATS_MAX_SAMPLES centres in preallocated typed arrays and
+// sorts each axis once. Published manifests carry precomputed bounds (scripts/splat_info.py),
+// so this only runs when bounds are missing or during calibration.
 function splatStats() {
   if (!splatMesh) return null;
   modelRoot.updateMatrixWorld(true);
   const mat = splatMesh.matrixWorld;
-  const xs = [], ys = [], zs = [];
+  const count = splatMesh.packedSplats?.numSplats ?? splatMesh.extSplats?.numSplats ?? 0;
+  const stride = Math.max(1, Math.ceil(count / STATS_MAX_SAMPLES));
+  const cap = Math.ceil((count || STATS_MAX_SAMPLES) / stride) + 1;
+  const xs = new Float32Array(cap), ys = new Float32Array(cap), zs = new Float32Array(cap);
+  let n = 0;
   const v = new THREE.Vector3();
   splatMesh.forEachSplat((i, center, _s, _q, opacity) => {
-    if (opacity < 0.2) return;
+    if (i % stride !== 0 || opacity < 0.2 || n >= cap) return;
     v.copy(center).applyMatrix4(mat);
-    xs.push(v.x); ys.push(v.y); zs.push(v.z);
+    xs[n] = v.x; ys[n] = v.y; zs[n] = v.z; n++;
   });
-  if (!xs.length) return null;
-  const pct = (arr, p) => { const s = Float32Array.from(arr).sort(); return s[Math.min(s.length - 1, Math.floor(p * s.length))]; };
+  if (!n) return null;
+  const sx = xs.subarray(0, n).sort(), sy = ys.subarray(0, n).sort(), sz = zs.subarray(0, n).sort();
   return {
-    min: [pct(xs, 0.02), pct(zs, 0.02)], max: [pct(xs, 0.98), pct(zs, 0.98)],
-    floor: pct(ys, 0.02), ceiling: pct(ys, 0.98),
+    min: [percentileSorted(sx, 0.02), percentileSorted(sz, 0.02)],
+    max: [percentileSorted(sx, 0.98), percentileSorted(sz, 0.98)],
+    floor: percentileSorted(sy, 0.02), ceiling: percentileSorted(sy, 0.98), samples: n,
   };
 }
 
 function updateBounds() {
-  const b = state.manifest.bounds;
-  if (b) { state.bounds = { min: b.min, max: b.max }; return; }
+  const m = state.manifest;
+  if (m.walkPolygon?.length >= 3) { state.area = { polygon: m.walkPolygon }; return; }
+  if (m.bounds) { state.area = { bounds: m.bounds }; return; }
   const s = splatStats();
   const pad = 0.15;
-  state.bounds = s ? { min: [s.min[0] + pad, s.min[1] + pad], max: [s.max[0] - pad, s.max[1] - pad] } : null;
+  state.area = s ? { bounds: { min: [s.min[0] + pad, s.min[1] + pad], max: [s.max[0] - pad, s.max[1] - pad] } } : null;
 }
 
 function eyeY() {
@@ -289,6 +331,7 @@ function hideOverlay() {
 
 function startWalk() {
   if (!state.loaded) return;
+  if (TOUCH_ONLY) return enterDragMode();
   hideOverlay();
   ui.canvas.focus({ preventScroll: true });
   // requestPointerLock returns a promise in modern browsers and undefined in older ones.
@@ -364,6 +407,19 @@ document.addEventListener("mousemove", (e) => {
 ui.canvas.addEventListener("mousedown", () => { if (state.mode === "drag") state.dragging = true; });
 window.addEventListener("mouseup", () => { state.dragging = false; });
 
+// Touch screens: drag to look only. Walking needs a keyboard (desktop is the Round 1 target).
+let lastTouch = null;
+ui.canvas.addEventListener("touchstart", (e) => { if (e.touches.length === 1) lastTouch = [e.touches[0].clientX, e.touches[0].clientY]; }, { passive: true });
+ui.canvas.addEventListener("touchmove", (e) => {
+  if (state.mode !== "drag" || !lastTouch || e.touches.length !== 1) return;
+  const t = e.touches[0];
+  state.yaw -= (t.clientX - lastTouch[0]) * LOOK_SENSITIVITY * 1.5;
+  state.pitch = THREE.MathUtils.clamp(state.pitch - (t.clientY - lastTouch[1]) * LOOK_SENSITIVITY * 1.5, -PITCH_LIMIT, PITCH_LIMIT);
+  lastTouch = [t.clientX, t.clientY];
+  applyLook();
+}, { passive: true });
+ui.canvas.addEventListener("touchend", () => { lastTouch = null; });
+
 ui.start.addEventListener("click", startWalk);
 ui.retry.addEventListener("click", () => { ui.error.hidden = true; boot(); });
 ui.btnReset.addEventListener("click", () => { if (state.loaded) { resetCamera(); toast("Camera reset to start point"); } });
@@ -423,6 +479,7 @@ function step(dt) {
   wish.multiplyScalar(m.walkSpeed * sprint);
   // Exponential smoothing gives gentle acceleration without overshoot.
   state.velocity.lerp(wish, 1 - Math.exp(-dt * 10));
+  const from = [camera.position.x, camera.position.z];
   camera.position.addScaledVector(state.velocity, dt);
 
   const vertical = (k.has("KeyE") || k.has("Space") ? 1 : 0) - (k.has("KeyQ") || k.has("KeyC") ? 1 : 0);
@@ -431,12 +488,11 @@ function step(dt) {
   } else {
     state.eyeOffset = THREE.MathUtils.clamp(state.eyeOffset + vertical * 0.8 * dt, ...EYE_OFFSET_RANGE);
     camera.position.y = eyeY();
-    // Soft navigation boundary derived from the splat extents. This is NOT collision
-    // detection: it only stops the visitor walking out of the reconstructed volume.
-    if (state.bounds) {
-      camera.position.x = THREE.MathUtils.clamp(camera.position.x, state.bounds.min[0], state.bounds.max[0]);
-      camera.position.z = THREE.MathUtils.clamp(camera.position.z, state.bounds.min[1], state.bounds.max[1]);
-    }
+    // Soft navigation boundary (calibrated floor polygon, else a rectangle). This is NOT
+    // collision detection: it keeps the visitor inside the room outline, nothing more.
+    const [x, z] = constrainMove(from, [camera.position.x, camera.position.z], state.area);
+    camera.position.x = x;
+    camera.position.z = z;
   }
 }
 
@@ -501,8 +557,21 @@ function initCalibration() {
     m.floorY = round(s.floor);
     $("c-floor").value = m.floorY; $("o-floor").textContent = `${m.floorY} m`;
     updateBounds(); camera.position.y = eyeY(); renderJson();
-    toast(`Floor ${m.floorY} m, ceiling ${round(s.ceiling)} m (2nd/98th percentile)`);
+    toast(`Floor ${m.floorY} m, ceiling ${round(s.ceiling)} m (2nd/98th percentile of ${s.samples.toLocaleString()} samples)`);
   });
+  const polyCount = () => { $("c-poly-n").textContent = m.walkPolygon?.length ?? 0; };
+  $("c-poly-add").addEventListener("click", () => {
+    m.walkPolygon = [...(m.walkPolygon || []), [round(camera.position.x), round(camera.position.z)]];
+    if (m.walkPolygon.length >= 3) updateBounds();
+    polyCount(); renderJson();
+    toast(m.walkPolygon.length >= 3 ? `Walk outline: ${m.walkPolygon.length} corners (active)` : `Corner ${m.walkPolygon.length} added (need 3)`);
+  });
+  $("c-poly-clear").addEventListener("click", () => {
+    m.walkPolygon = null; updateBounds(); polyCount(); renderJson(); toast("Walk outline cleared");
+  });
+  $("c-calibrated").checked = !!m.calibrated;
+  $("c-calibrated").addEventListener("change", (e) => { m.calibrated = e.target.checked; renderJson(); });
+  polyCount();
   $("c-copy").addEventListener("click", async () => {
     try { await navigator.clipboard.writeText(manifestJson()); toast("Manifest JSON copied"); }
     catch { toast("Clipboard blocked: copy from the box below"); }
@@ -514,7 +583,8 @@ function manifestJson() {
   const m = state.manifest;
   const out = {};
   for (const key of Object.keys(DEFAULTS)) out[key] = m[key];
-  for (const key of Object.keys(m)) if (!(key in out)) out[key] = m[key];
+  // An outline with fewer than 3 corners is not valid yet; don't export it.
+  if (out.walkPolygon && out.walkPolygon.length < 3) out.walkPolygon = null;
   return JSON.stringify(out, null, 2);
 }
 function renderJson() { $("c-json").textContent = manifestJson(); }

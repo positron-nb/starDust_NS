@@ -65,6 +65,7 @@ button { font: inherit; color: inherit; }
 @keyframes slide { from { transform: translateX(-100%); } to { transform: translateX(300%); } }
 .loader-row { display: flex; justify-content: space-between; margin-top: 8px; font-size: 12px; color: var(--muted); }
 
+.touch-note { margin: 0 0 14px; padding: 10px 12px; border-radius: 10px; font-size: 12.5px; line-height: 1.5; color: var(--warn); border: 1px solid rgba(245, 194, 107, 0.35); background: rgba(245, 194, 107, 0.07); }
 .error { margin-bottom: 18px; padding: 14px; border-radius: 12px; border: 1px solid rgba(255, 122, 122, 0.35); background: rgba(255, 122, 122, 0.08); }
 .error strong { color: var(--danger); font-size: 14px; }
 .error p { margin: 6px 0 12px; font-size: 13px; color: var(--text); line-height: 1.5; word-break: break-word; }

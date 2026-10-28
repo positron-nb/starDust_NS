@@ -43,6 +43,8 @@ def main() -> int:
     ap.add_argument("--min-texture", type=float, default=0.15, help="min fraction of textured blocks (default 0.15)")
     ap.add_argument("--dup-bits", type=int, default=6, help="dHash Hamming distance <= this is a duplicate (default 6)")
     ap.add_argument("--move-rejects", action="store_true", help="move flagged frames to <images>_rejected/")
+    ap.add_argument("--min-frames", type=int, default=40,
+                    help="exit with code 3 if fewer usable frames remain (default 40; 0 disables)")
     args = ap.parse_args()
 
     files = sorted(p for p in args.images.iterdir() if p.suffix.lower() in IMAGE_EXTS)
@@ -113,10 +115,13 @@ def main() -> int:
             shutil.move(str(args.images / r["file"]), rej_dir / r["file"])
 
     print(json.dumps(summary, indent=2))
-    if summary["kept"] < 40:
-        print("warning: fewer than 40 usable frames; COLMAP may fail to register the room. Re-capture or lower --fps thresholds.")
     if len(resolutions) > 1:
         print("warning: mixed resolutions; nerfstudio expects a single camera model per capture.")
+    # Gate: stop the pipeline here rather than spend GPU time on insufficient data.
+    if summary["kept"] == 0 or summary["kept"] < args.min_frames:
+        print(f"error: only {summary['kept']} usable frames (minimum {args.min_frames}). "
+              "Re-capture more slowly / with more light, raise --fps, or relax thresholds.", file=sys.stderr)
+        return 3
     return 0
 
 

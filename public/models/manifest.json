@@ -9,6 +9,8 @@
   "walkSpeed": 1.4,
   "sprintMultiplier": 2,
   "start": { "position": [0.6, -0.5], "yawDeg": -54 },
-  "bounds": null,
-  "background": "#07080b"
+  "bounds": { "min": [0.15, -2.85], "max": [3.85, -0.15] },
+  "walkPolygon": null,
+  "background": "#07080b",
+  "calibrated": true
 }

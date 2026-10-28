@@ -9,7 +9,16 @@
 
 The full raw video is **not** committed (size and privacy). The complete frame set used for the submitted model is in the Google Drive folder.
 
-## Tests
+## Automated tests (`npm test`, also run in GitHub Actions CI)
+
+| Suite | File | Covers |
+|---|---|---|
+| JS (19 tests) | `test/js/manifest.test.mjs` | The published manifest is valid and its model exists. Defaults and deep merge. Field-specific rejection of bad scale, eye height, rotation, file type, provenance, bounds, polygon, colour and start. Point-in-polygon on an L-shaped room. Wall sliding. An outside start is not trapped. Rectangle clamping. |
+| Python (5 tests) | `test/py/test_pipeline.py` | Sharpest-of-3 extraction (36 candidates → 12 frames at 960×540). The quality gate passes, fails below `--min-frames`, and fails when every frame is rejected (with rejects moved). `splat_info.py` statistics and the draft manifest on the synthetic room. |
+
+CI additionally runs `npm ci`, `npm run build`, checks that `dist/` contains the published manifest and its model, and runs `bash -n` on the Linux pipeline. Result on 2026-10-29 (local): **24/24 passed**.
+
+## Manual tests
 
 ### T1: pre-processing on a generated video (no capture needed)
 

@@ -71,46 +71,46 @@ This standard operating procedure (SOP) defines how a non-expert captures an ind
 ```powershell
 # 1) Put the video in capture\ (git-ignored), e.g. capture\room.mp4
 # 2) Extract 2 fps, keeping the sharpest of each 3 candidates, max width 1600 px
-python scripts\extract_frames.py capture\room.mp4 data\room\images --fps 2 --max-width 1600
+python scripts\extract_frames.py capture\room.mp4 data\runs\room-v1\images --fps 2 --max-width 1600
 # 3) Quality-check; move blurred, dark, textureless or duplicate frames aside
-python scripts\check_images.py data\room\images --move-rejects
+python scripts\check_images.py data\runs\room-v1\images --move-rejects
 ```
 
 ```bash
-python3 scripts/extract_frames.py capture/room.mp4 data/room/images --fps 2 --max-width 1600
-python3 scripts/check_images.py data/room/images --move-rejects
+python3 scripts/extract_frames.py capture/room.mp4 data/runs/room-v1/images --fps 2 --max-width 1600
+python3 scripts/check_images.py data/runs/room-v1/images --move-rejects
 ```
 
-**Targets:** 150–400 usable frames. A rejection rate below 20 % is good. If more than 30 % are rejected for blur, re-capture more slowly or in better light. Open `data/room/images_rejected/` and spot-check that the rejects really are bad, and adjust `--blur-rel` if not. Width 1600 px balances COLMAP accuracy against the Splatfacto memory budget (8 GB GPU).
+**Targets:** 150–400 usable frames (`check_images.py` exits with code 3 below `--min-frames`, default 40, and the pipeline stops). A rejection rate below 20 % is good. If more than 30 % are rejected for blur, re-capture more slowly or in better light. Open `data/runs/room-v1/images_rejected/` and spot-check that the rejects really are bad, and adjust `--blur-rel` if not. Width 1600 px balances COLMAP accuracy against the Splatfacto memory budget (8 GB GPU).
 
 ## 7. Run reconstruction and verify
 
 ```powershell
 # Local (needs nerfstudio + COLMAP on PATH, see docs\environment.md)
-.\scripts\run_reconstruction.ps1 -Video capture\room.mp4 -Workspace data\room
+.\scripts\run_reconstruction.ps1 -Video capture\room.mp4 -RunId room-v1
 # or hosted GPU: open notebooks\namma_space_colab.ipynb in Google Colab
 ```
 
 **Verification checklist:**
 
-- [ ] `data/room/processed/transforms.json` exists. **Registered cameras ÷ frames used ≥ 0.8.** Below that, check the COLMAP log and re-capture weak areas.
+- [ ] `data/runs/<RunId>/processed/transforms.json` exists. The pipeline stops automatically below a **registration ratio of 0.7**; aim for **≥ 0.8**. Below that, check the COLMAP log and re-capture weak areas.
 - [ ] Training finished at the configured iteration count, with no NaN loss.
-- [ ] `exports/splat.ply` opens. `python scripts/splat_info.py data/room/exports/splat.ply` reports a plausible splat count (typically 0.3–3 M) and `non_finite` close to 0.
-- [ ] In the viewer (`npm run dev`, then `/?calibrate`), the walls are vertical, the floor is level, the room is not mirrored, and furniture is recognisable from the entrance view and from each corner.
+- [ ] `exports/splat.ply` opens. `data/runs/<RunId>/splat_info.json` reports a plausible splat count (typically 0.3–3 M) and `non_finite` close to 0.
+- [ ] In the viewer (`npm run dev`, then `/?calibrate&manifest=models/<RunId>.manifest.json`), the walls are vertical, the floor is level, the room is not mirrored, and furniture is recognisable from the entrance view and from each corner.
 - [ ] A known dimension (door ≈ 2.0 m high) roughly matches after setting `scale`, which makes walking speed and eye height feel natural.
 
 ## 8. Record the run (fill `submission/metrics.md`)
 
-`run_reconstruction.ps1` and `run_reconstruction.sh` write `data/<room>/run_metrics.json` automatically. Copy the measured values; do not estimate them.
+`run_reconstruction.ps1` and `run_reconstruction.sh` write `data/runs/<RunId>/run_metrics.json` automatically (same schema on both; sizes in exact bytes). Copy the measured values; do not estimate them.
 
 | Metric | Source |
 |---|---|
 | Video duration and resolution | `extract_report.json` and phone metadata |
 | Frames extracted, kept, rejected (with reasons) | `extract_report.json`, `quality_summary.json` |
-| Registered cameras | `run_metrics.json → registered_cameras` |
+| Registered cameras and ratio | `run_metrics.json → registered_cameras, registration_ratio` |
 | COLMAP, training and export times | `run_metrics.json → *_seconds` |
 | GPU used | `nvidia-smi` output (local or Colab) |
-| Splat count; PLY and web model size | `splat_info.json`, `run_metrics.json` |
+| Splat count; PLY and web model size (bytes) | `splat_info.json`, `run_metrics.json → export_ply_bytes, web_model_bytes` |
 | Viewer load time and FPS | Viewer HUD (Load, FPS), measured on the deployed URL |
 | Quality observations | Screenshots from entrance, each corner, and furniture close-ups |
 

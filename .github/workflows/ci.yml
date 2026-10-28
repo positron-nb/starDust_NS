@@ -1,0 +1,33 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: npm ci
+      - run: python -m pip install -r requirements.txt
+      - name: Unit tests (manifest validation, walk area, frame extraction, quality gate, splat info)
+        run: npm test
+      - name: Production build
+        run: npm run build
+      - name: Built site contains the published manifest and its model
+        run: |
+          test -f dist/index.html
+          test -f dist/models/manifest.json
+          model=$(python -c "import json;print(json.load(open('dist/models/manifest.json'))['file'])")
+          test -s "dist/$model"
+      - name: Shell pipeline syntax
+        run: bash -n scripts/run_reconstruction.sh
