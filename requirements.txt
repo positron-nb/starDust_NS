@@ -1,0 +1,5 @@
+# Pre-processing scripts (frame extraction, quality check, splat inspection).
+# Reconstruction itself (COLMAP + nerfstudio) is installed separately: see docs/environment.md.
+numpy>=1.26
+Pillow>=10.3
+imageio-ffmpeg>=0.5

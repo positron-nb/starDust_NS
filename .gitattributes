@@ -1,0 +1,6 @@
+* text=auto
+*.sh text eol=lf
+*.ply binary
+*.sog binary
+*.spz binary
+*.pdf binary

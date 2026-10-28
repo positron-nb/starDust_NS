@@ -1,0 +1,20 @@
+node_modules/
+dist/
+.vercel/
+.netlify/
+
+# raw captures and pipeline workspaces (large and possibly private)
+capture/
+data/
+test_out/
+*.mp4
+*.mov
+*.MOV
+
+# python
+__pycache__/
+*.pyc
+.venv*/
+
+.DS_Store
+Thumbs.db

@@ -1,0 +1,14 @@
+{
+  "name": "Synthetic test room (not a reconstruction)",
+  "provenance": "synthetic",
+  "file": "models/synthetic_room.sog",
+  "rotationDeg": [-90, 0, 0],
+  "scale": 1,
+  "floorY": 0,
+  "eyeHeight": 1.6,
+  "walkSpeed": 1.4,
+  "sprintMultiplier": 2,
+  "start": { "position": [0.6, -0.5], "yawDeg": -54 },
+  "bounds": null,
+  "background": "#07080b"
+}

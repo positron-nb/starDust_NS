@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Namma Space · Walkthrough</title>
+    <meta name="description" content="Photorealistic first-person walkthrough of a real indoor room reconstructed from smartphone capture with 3D Gaussian Splatting." />
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230b0d12'/%3E%3Cpath d='M8 23V9l8 8 8-8v14' fill='none' stroke='%237cf0c4' stroke-width='3' stroke-linejoin='round'/%3E%3C/svg%3E" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <canvas id="viewport" aria-label="3D walkthrough viewport"></canvas>
+
+    <header class="brand" aria-label="Model information">
+      <div class="brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 32 32"><path d="M8 23V9l8 8 8-8v14" /></svg>
+      </div>
+      <div>
+        <div class="brand-name">Namma Space</div>
+        <div class="brand-model"><span id="model-name">Loading…</span><span id="provenance" class="badge" hidden></span></div>
+      </div>
+    </header>
+
+    <!-- Loading / start / paused overlay -->
+    <section id="overlay" class="overlay" role="dialog" aria-modal="true" aria-labelledby="overlay-title">
+      <div class="card">
+        <p class="eyebrow">Gaussian-splat digital twin</p>
+        <h1 id="overlay-title">Walk through the room</h1>
+        <p id="overlay-sub" class="sub">Reconstructed from a smartphone capture. Rendered live in your browser, nothing to install.</p>
+
+        <div id="loader" class="loader" aria-live="polite">
+          <div class="bar"><div id="bar-fill" class="bar-fill"></div></div>
+          <div class="loader-row"><span id="load-status">Preparing…</span><span id="load-pct" class="mono"></span></div>
+        </div>
+
+        <div id="error" class="error" role="alert" hidden>
+          <strong id="error-title">Could not load the room</strong>
+          <p id="error-detail"></p>
+          <button id="retry" class="btn ghost" type="button">Retry</button>
+        </div>
+
+        <button id="start" class="btn primary" type="button" disabled>Start walkthrough</button>
+
+        <ul class="keys" aria-label="Controls">
+          <li><span class="kbd-group"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd></span>Move</li>
+          <li><span class="kbd-group"><kbd class="wide">Mouse</kbd></span>Look around</li>
+          <li><span class="kbd-group"><kbd class="wide">Shift</kbd></span>Walk faster</li>
+          <li><span class="kbd-group"><kbd>Q</kbd><kbd>E</kbd></span>Lower / raise eye level</li>
+          <li><span class="kbd-group"><kbd>R</kbd></span>Reset to start point</li>
+          <li><span class="kbd-group"><kbd class="wide">Esc</kbd></span>Release mouse / exit</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- Floating controls -->
+    <nav class="dock" aria-label="Viewer controls">
+      <button id="btn-reset" class="icon-btn" type="button" title="Reset camera (R)" aria-label="Reset camera">
+        <svg viewBox="0 0 24 24"><path d="M4 12a8 8 0 1 0 2.4-5.7M4 4v4.5h4.5" /></svg>
+      </button>
+      <button id="btn-fullscreen" class="icon-btn" type="button" title="Fullscreen (F)" aria-label="Toggle fullscreen">
+        <svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" /></svg>
+      </button>
+      <button id="btn-hud" class="icon-btn" type="button" title="Technical stats (I)" aria-label="Toggle technical stats" aria-pressed="true">
+        <svg viewBox="0 0 24 24"><path d="M4 19V11M10 19V5M16 19v-6M22 19H2" /></svg>
+      </button>
+      <button id="btn-exit" class="icon-btn danger" type="button" title="Exit walkthrough (Esc)" aria-label="Exit walkthrough">
+        <svg viewBox="0 0 24 24"><path d="M15 4h4v16h-4M10 8l-4 4 4 4M6 12h10" /></svg>
+      </button>
+    </nav>
+
+    <aside id="hud" class="hud mono" aria-label="Technical status">
+      <div><span>FPS</span><b id="hud-fps">–</b></div>
+      <div><span>Splats</span><b id="hud-splats">–</b></div>
+      <div><span>Model</span><b id="hud-size">–</b></div>
+      <div><span>Load</span><b id="hud-load">–</b></div>
+      <div><span>Pos</span><b id="hud-pos">–</b></div>
+      <div><span>Mode</span><b id="hud-mode">idle</b></div>
+    </aside>
+
+    <div id="crosshair" class="crosshair" aria-hidden="true"></div>
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+    <!-- Calibration panel: open with ?calibrate -->
+    <aside id="calib" class="calib" hidden aria-label="Model calibration">
+      <h2>Calibrate model</h2>
+      <p class="hint">Align the reconstruction so the floor is level, then copy the JSON into <code>public/models/manifest.json</code>.</p>
+      <label>Rotate X <output id="o-rx"></output><input id="c-rx" type="range" min="-180" max="180" step="0.5" /></label>
+      <label>Rotate Y <output id="o-ry"></output><input id="c-ry" type="range" min="-180" max="180" step="0.5" /></label>
+      <label>Rotate Z <output id="o-rz"></output><input id="c-rz" type="range" min="-180" max="180" step="0.5" /></label>
+      <label>Scale <output id="o-scale"></output><input id="c-scale" type="range" min="0.1" max="10" step="0.01" /></label>
+      <label>Floor Y <output id="o-floor"></output><input id="c-floor" type="range" min="-5" max="5" step="0.01" /></label>
+      <label>Eye height <output id="o-eye"></output><input id="c-eye" type="range" min="0.8" max="2.2" step="0.01" /></label>
+      <label class="check"><input id="c-fly" type="checkbox" /> Free-fly (ignore floor)</label>
+      <div class="row">
+        <button id="c-start" class="btn ghost" type="button">Set start here</button>
+        <button id="c-bounds" class="btn ghost" type="button">Fit bounds</button>
+      </div>
+      <button id="c-copy" class="btn primary" type="button">Copy manifest JSON</button>
+      <pre id="c-json" class="mono"></pre>
+    </aside>
+
+    <noscript><div class="noscript">This walkthrough needs JavaScript and WebGL 2.</div></noscript>
+    <script type="module" src="./main.js"></script>
+  </body>
+</html>

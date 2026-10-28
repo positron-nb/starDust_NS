@@ -1,0 +1,22 @@
+{
+  "name": "namma-space",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Smartphone capture to photorealistic Gaussian-splat walkthrough in the browser (Techfest 2026-27 Namma Space, Round 1).",
+  "type": "module",
+  "license": "MIT",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "convert": "splat-transform"
+  },
+  "dependencies": {
+    "@sparkjsdev/spark": "2.3.1",
+    "three": "0.186.1"
+  },
+  "devDependencies": {
+    "@playcanvas/splat-transform": "3.10.1",
+    "vite": "8.3.4"
+  }
+}
