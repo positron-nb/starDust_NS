@@ -47,9 +47,17 @@ $ErrorActionPreference = 'Stop'
 $Root = Split-Path -Parent $PSScriptRoot
 $stages = @('frames', 'colmap', 'train', 'export', 'web')
 $startIdx = [array]::IndexOf($stages, $SkipTo)
-if ($RunId -notmatch '^[A-Za-z0-9._-]+$') { throw "RunId may only contain letters, digits, '.', '_' and '-'." }
+if ($RunId -notmatch '^[A-Za-z0-9._-]+$' -or $RunId -match '^\.+$') {
+  throw "RunId may only contain letters, digits, '.', '_' and '-', and cannot be only dots."
+}
 
 $Workspace = Join-Path $RunsRoot $RunId
+# The run folder must be a direct child of the runs root; checked before anything is deleted.
+$runsRootFull = [IO.Path]::GetFullPath((Join-Path (Get-Location) $RunsRoot)).TrimEnd('\', '/')
+$workspaceFull = [IO.Path]::GetFullPath((Join-Path (Get-Location) $Workspace)).TrimEnd('\', '/')
+if ((Split-Path $workspaceFull -Parent) -ne $runsRootFull -or (Split-Path $workspaceFull -Leaf) -ne $RunId) {
+  throw "Run folder $workspaceFull does not resolve inside $runsRootFull; refusing to continue."
+}
 $imagesDir = Join-Path $Workspace 'images'
 $processed = Join-Path $Workspace 'processed'
 $outputs = Join-Path $Workspace 'outputs'
@@ -58,7 +66,7 @@ $metricsPath = Join-Path $Workspace 'run_metrics.json'
 
 if ($startIdx -eq 0 -and (Test-Path $Workspace) -and (Get-ChildItem $Workspace -Force | Select-Object -First 1)) {
   if (-not $Force) { throw "Run folder $Workspace already exists. Use a new -RunId, -SkipTo a later stage, or -Force to start it over." }
-  Remove-Item -Recurse -Force $Workspace
+  Remove-Item -Recurse -Force -LiteralPath $workspaceFull
 }
 if ($startIdx -gt 0 -and -not (Test-Path $metricsPath)) { throw "No run_metrics.json in $Workspace; cannot resume run '$RunId'." }
 New-Item -ItemType Directory -Force $Workspace | Out-Null

@@ -72,7 +72,7 @@ export function validateManifest(raw) {
   if (errors.length === 0) {
     const inside = m.walkPolygon ? pointInPolygon(m.start.position, m.walkPolygon)
       : !m.bounds || insideBounds(m.start.position, m.bounds);
-    if (!inside) warnings.push("start.position is outside the walkable area; it will be clamped");
+    if (!inside) warnings.push("start.position is outside the walkable area; the camera will spawn at the nearest point inside");
     if (m.provenance === "reconstruction" && !m.calibrated) warnings.push("reconstruction is not marked calibrated");
   }
   return { manifest: errors.length ? null : m, errors, warnings };
@@ -101,22 +101,94 @@ export function insideBounds([x, z], b) {
   return x >= b.min[0] && x <= b.max[0] && z >= b.min[1] && z <= b.max[1];
 }
 
+const cross = (o, a, b) => (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0]);
+const onSegment = (p, a, b) => Math.min(a[0], b[0]) <= p[0] && p[0] <= Math.max(a[0], b[0])
+  && Math.min(a[1], b[1]) <= p[1] && p[1] <= Math.max(a[1], b[1]);
+
+/** True if segments ab and cd intersect, including touching endpoints and collinear overlap. */
+export function segmentsIntersect(a, b, c, d) {
+  const d1 = cross(c, d, a), d2 = cross(c, d, b), d3 = cross(a, b, c), d4 = cross(a, b, d);
+  if (((d1 > 0 && d2 < 0) || (d1 < 0 && d2 > 0)) && ((d3 > 0 && d4 < 0) || (d3 < 0 && d4 > 0))) return true;
+  return (d1 === 0 && onSegment(a, c, d)) || (d2 === 0 && onSegment(b, c, d))
+    || (d3 === 0 && onSegment(c, a, b)) || (d4 === 0 && onSegment(d, a, b));
+}
+
+/** True if the straight path a→b stays inside the polygon (end inside, no wall crossed or touched). */
+export function segmentInsidePolygon(a, b, poly) {
+  if (!pointInPolygon(b, poly)) return false;
+  for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+    if (segmentsIntersect(a, b, poly[j], poly[i])) return false;
+  }
+  return true;
+}
+
+/**
+ * Nearest point to `p` inside the walk area. Outside a polygon, it is the closest boundary
+ * point nudged `inset` metres inward (tried along the edge normal, then towards p's neighbourhood).
+ */
+export function nearestInside(p, area, inset = 0.05) {
+  if (!area) return p;
+  if (area.bounds) {
+    const b = area.bounds;
+    return [Math.min(Math.max(p[0], b.min[0]), b.max[0]), Math.min(Math.max(p[1], b.min[1]), b.max[1])];
+  }
+  const poly = area.polygon;
+  if (pointInPolygon(p, poly)) return p;
+  let best = null;
+  for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+    const a = poly[j], b = poly[i];
+    const ex = b[0] - a[0], ez = b[1] - a[1];
+    const len2 = ex * ex + ez * ez;
+    const t = Math.min(1, Math.max(0, ((p[0] - a[0]) * ex + (p[1] - a[1]) * ez) / len2));
+    const q = [a[0] + t * ex, a[1] + t * ez];
+    const d = (q[0] - p[0]) ** 2 + (q[1] - p[1]) ** 2;
+    if (!best || d < best.d) best = { d, q, n: [-ez / Math.sqrt(len2), ex / Math.sqrt(len2)], a, b };
+  }
+  for (const s of [1, -1]) {
+    for (const k of [1, 2, 4]) {
+      const c = [best.q[0] + s * k * inset * best.n[0], best.q[1] + s * k * inset * best.n[1]];
+      if (pointInPolygon(c, poly)) return c;
+    }
+  }
+  // Closest point is a convex corner where the normal misses: step towards the edge midpoint.
+  const mid = [(best.a[0] + best.b[0]) / 2, (best.a[1] + best.b[1]) / 2];
+  for (let f = 0.1; f <= 1; f += 0.1) {
+    const c = [best.q[0] + f * (mid[0] - best.q[0]), best.q[1] + f * (mid[1] - best.q[1])];
+    for (const s of [1, -1]) {
+      const cc = [c[0] + s * inset * best.n[0], c[1] + s * inset * best.n[1]];
+      if (pointInPolygon(cc, poly)) return cc;
+    }
+  }
+  return polygonCentroidInside(poly);
+}
+
+function polygonCentroidInside(poly) {
+  const n = poly.length;
+  const c = [poly.reduce((s, p) => s + p[0], 0) / n, poly.reduce((s, p) => s + p[1], 0) / n];
+  return pointInPolygon(c, poly) ? c : [...poly[0]];
+}
+
 /**
  * Resolve a move from `from` to `to` (both [x, z]) against the walk area.
- * Tries the full move, then each axis alone (so the camera slides along edges), else stays put.
- * This is a navigation boundary, not physical collision: splats have no surfaces.
+ * Tries the full move, then each axis alone (so the camera slides along walls), else stays put.
+ * For a polygon the whole path is checked, so a diagonal step cannot cut a concave corner.
+ * A camera that is somehow outside is projected back inside. This is a navigation boundary,
+ * not physical collision: splats have no surfaces.
  */
 export function constrainMove(from, to, area) {
   if (!area) return to;
   if (area.polygon) {
-    const ok = (p) => pointInPolygon(p, area.polygon);
-    if (ok(to) || !ok(from)) return to; // never trap a camera that starts outside the outline
-    if (ok([to[0], from[1]])) return [to[0], from[1]];
-    if (ok([from[0], to[1]])) return [from[0], to[1]];
+    const poly = area.polygon;
+    if (!pointInPolygon(from, poly)) return nearestInside(from, area);
+    const ok = (p) => segmentInsidePolygon(from, p, poly);
+    if (ok(to)) return to;
+    const xOnly = [to[0], from[1]];
+    if (ok(xOnly)) return xOnly;
+    const zOnly = [from[0], to[1]];
+    if (ok(zOnly)) return zOnly;
     return from;
   }
-  const b = area.bounds;
-  return [Math.min(Math.max(to[0], b.min[0]), b.max[0]), Math.min(Math.max(to[1], b.min[1]), b.max[1])];
+  return nearestInside(to, area);
 }
 
 /** Value at fraction `p` (0..1) of an already-sorted typed array. */

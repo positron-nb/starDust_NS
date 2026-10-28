@@ -113,7 +113,8 @@ body.walking .brand, body.walking .dock { opacity: 0.55; }
 .calib label output { float: right; color: var(--text); font-family: var(--mono); }
 .calib input[type="range"] { width: 100%; accent-color: var(--accent); }
 .calib .check { display: flex; gap: 8px; align-items: center; }
-.calib .row { display: flex; gap: 8px; margin: 6px 0 10px; }
+.calib .row { display: flex; flex-wrap: wrap; gap: 8px; margin: 6px 0 10px; }
+.calib .btn.ghost:disabled { opacity: 0.4; cursor: not-allowed; }
 .calib pre { margin: 10px 0 0; padding: 10px; border-radius: 8px; background: #07080b; border: 1px solid var(--line); font-size: 10.5px; white-space: pre-wrap; word-break: break-all; }
 code { font-family: var(--mono); font-size: 0.95em; }
 

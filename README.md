@@ -92,7 +92,7 @@ The pipeline never touches the live viewer. A run produces `public/models/<RunId
    - Use **Rotate X/Y/Z** until the walls are vertical and the floor is level.
    - Use **Scale** until a known dimension looks right. COLMAP is scale-free; a door should be about 2 m high.
    - **Fit bounds** re-estimates the floor and the rectangle from sampled splats.
-   - **Walk outline:** walk to each floor corner in turn and press **Add corner**. The polygon replaces the rectangle, so irregular or L-shaped rooms don't let you cross outer walls.
+   - **Walk outline:** walk to each floor corner in order and press **Add corner** (the boundary is off while recording), then **Finish outline** to activate it. The polygon replaces the rectangle, and every step is checked as a path against its walls, so irregular or L-shaped rooms don't let you cross outer walls.
    - Walk to the entrance and press **Set start here**.
    - Tick **Mark as calibrated**, press **Copy manifest JSON**, and paste the result into the draft file.
 3. Publish it: `Copy-Item public\models\<RunId>.manifest.json public\models\manifest.json`.

@@ -3,7 +3,7 @@
 // can be swapped in without touching this file (see README "Replacing the model").
 import * as THREE from "three";
 import { SparkRenderer, SplatMesh } from "@sparkjsdev/spark";
-import { DEFAULTS, constrainMove, percentileSorted, validateManifest } from "./manifest.js";
+import { DEFAULTS, constrainMove, nearestInside, percentileSorted, validateManifest } from "./manifest.js";
 
 const params = new URLSearchParams(location.search);
 const CALIBRATE = params.has("calibrate");
@@ -40,6 +40,7 @@ const state = {
   velocity: new THREE.Vector3(),
   fly: false,
   area: null, // { polygon } | { bounds } | null: soft navigation boundary, not collision
+  draftPolygon: null, // corners being recorded in ?calibrate; the boundary is off while drafting
   loaded: false,
   dragging: false,
   download: null, // AbortController of the in-flight model download
@@ -300,7 +301,9 @@ function resetCamera() {
   state.velocity.set(0, 0, 0);
   state.yaw = THREE.MathUtils.degToRad(start.yawDeg || 0);
   state.pitch = 0;
-  camera.position.set(start.position[0], eyeY(), start.position[1]);
+  // A start outside the walk area spawns at the nearest point inside it.
+  const [x, z] = nearestInside(start.position, state.area);
+  camera.position.set(x, eyeY(), z);
   applyLook();
 }
 
@@ -490,7 +493,8 @@ function step(dt) {
     camera.position.y = eyeY();
     // Soft navigation boundary (calibrated floor polygon, else a rectangle). This is NOT
     // collision detection: it keeps the visitor inside the room outline, nothing more.
-    const [x, z] = constrainMove(from, [camera.position.x, camera.position.z], state.area);
+    const area = state.draftPolygon ? null : state.area;
+    const [x, z] = constrainMove(from, [camera.position.x, camera.position.z], area);
     camera.position.x = x;
     camera.position.z = z;
   }
@@ -559,19 +563,38 @@ function initCalibration() {
     updateBounds(); camera.position.y = eyeY(); renderJson();
     toast(`Floor ${m.floorY} m, ceiling ${round(s.ceiling)} m (2nd/98th percentile of ${s.samples.toLocaleString()} samples)`);
   });
-  const polyCount = () => { $("c-poly-n").textContent = m.walkPolygon?.length ?? 0; };
+  // Outline drafting: corners are collected with the boundary switched off, so every corner can be
+  // reached; the outline only becomes active after "Finish outline".
+  const polyUi = () => {
+    const n = state.draftPolygon?.length ?? 0;
+    $("c-poly-n").textContent = n;
+    $("c-poly-finish").disabled = n < 3;
+    $("c-poly-state").textContent = state.draftPolygon ? `drafting: ${n} corner(s), boundary off`
+      : m.walkPolygon ? `active: ${m.walkPolygon.length} corners` : "none (rectangle bounds)";
+  };
   $("c-poly-add").addEventListener("click", () => {
-    m.walkPolygon = [...(m.walkPolygon || []), [round(camera.position.x), round(camera.position.z)]];
-    if (m.walkPolygon.length >= 3) updateBounds();
-    polyCount(); renderJson();
-    toast(m.walkPolygon.length >= 3 ? `Walk outline: ${m.walkPolygon.length} corners (active)` : `Corner ${m.walkPolygon.length} added (need 3)`);
+    state.draftPolygon = [...(state.draftPolygon || []), [round(camera.position.x), round(camera.position.z)]];
+    polyUi();
+    toast(`Corner ${state.draftPolygon.length} recorded${state.draftPolygon.length < 3 ? " (need at least 3)" : ""}`);
+  });
+  $("c-poly-finish").addEventListener("click", () => {
+    const draft = state.draftPolygon;
+    const check = validateManifest({ ...manifestForExport(), walkPolygon: draft });
+    const polyErr = check.errors.find((e) => e.startsWith("walkPolygon"));
+    if (polyErr) { toast(polyErr); return; }
+    m.walkPolygon = draft;
+    state.draftPolygon = null;
+    updateBounds();
+    const [x, z] = nearestInside([camera.position.x, camera.position.z], state.area);
+    camera.position.x = x; camera.position.z = z;
+    polyUi(); renderJson(); toast(`Walk outline active: ${m.walkPolygon.length} corners`);
   });
   $("c-poly-clear").addEventListener("click", () => {
-    m.walkPolygon = null; updateBounds(); polyCount(); renderJson(); toast("Walk outline cleared");
+    m.walkPolygon = null; state.draftPolygon = null; updateBounds(); polyUi(); renderJson(); toast("Walk outline cleared");
   });
   $("c-calibrated").checked = !!m.calibrated;
   $("c-calibrated").addEventListener("change", (e) => { m.calibrated = e.target.checked; renderJson(); });
-  polyCount();
+  polyUi();
   $("c-copy").addEventListener("click", async () => {
     try { await navigator.clipboard.writeText(manifestJson()); toast("Manifest JSON copied"); }
     catch { toast("Clipboard blocked: copy from the box below"); }
@@ -579,14 +602,14 @@ function initCalibration() {
   renderJson();
 }
 const round = (v) => Math.round(v * 1000) / 1000;
-function manifestJson() {
+// Only the finished outline is exported; an unfinished draft never reaches the manifest.
+function manifestForExport() {
   const m = state.manifest;
   const out = {};
   for (const key of Object.keys(DEFAULTS)) out[key] = m[key];
-  // An outline with fewer than 3 corners is not valid yet; don't export it.
-  if (out.walkPolygon && out.walkPolygon.length < 3) out.walkPolygon = null;
-  return JSON.stringify(out, null, 2);
+  return out;
 }
+function manifestJson() { return JSON.stringify(manifestForExport(), null, 2); }
 function renderJson() { $("c-json").textContent = manifestJson(); }
 
 boot();

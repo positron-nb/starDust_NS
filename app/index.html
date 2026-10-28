@@ -99,10 +99,11 @@
         <button id="c-start" class="btn ghost" type="button">Set start here</button>
         <button id="c-bounds" class="btn ghost" type="button">Fit bounds</button>
       </div>
-      <p class="hint">Walk area: stand at each floor corner in turn (walk with free-fly off) and add it. The outline replaces the rectangle.</p>
+      <p class="hint">Walk outline: walk to each floor corner in order and press Add corner. The boundary is off while you record; press Finish to activate it (it replaces the rectangle). Outline: <b id="c-poly-state"></b></p>
       <div class="row">
         <button id="c-poly-add" class="btn ghost" type="button">Add corner (<span id="c-poly-n">0</span>)</button>
-        <button id="c-poly-clear" class="btn ghost" type="button">Clear outline</button>
+        <button id="c-poly-finish" class="btn ghost" type="button" disabled>Finish outline</button>
+        <button id="c-poly-clear" class="btn ghost" type="button">Clear</button>
       </div>
       <label class="check"><input id="c-calibrated" type="checkbox" /> Mark as calibrated</label>
       <button id="c-copy" class="btn primary" type="button">Copy manifest JSON</button>

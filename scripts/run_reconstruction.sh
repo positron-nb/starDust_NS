@@ -32,7 +32,9 @@ while [[ $# -gt 0 ]]; do
     *) echo "unknown argument: $1" >&2; exit 2 ;;
   esac
 done
-[[ "$RUN_ID" =~ ^[A-Za-z0-9._-]+$ ]] || { echo "run id may only contain letters, digits, . _ -" >&2; exit 2; }
+if [[ ! "$RUN_ID" =~ ^[A-Za-z0-9._-]+$ || "$RUN_ID" =~ ^\.+$ ]]; then
+  echo "run id may only contain letters, digits, . _ - and cannot be only dots" >&2; exit 2
+fi
 
 STAGES=(frames colmap train export web)
 idx() { for i in "${!STAGES[@]}"; do [[ "${STAGES[$i]}" == "$1" ]] && echo "$i"; done; }
@@ -44,9 +46,16 @@ IMAGES_DIR="$WORKSPACE/images" PROCESSED="$WORKSPACE/processed"
 OUTPUTS="$WORKSPACE/outputs" EXPORTS="$WORKSPACE/exports"
 METRICS="$WORKSPACE/run_metrics.json"
 
+# The run folder must be a direct child of the runs root; checked before anything is deleted.
+RUNS_ROOT_FULL="$(realpath -m "$RUNS_ROOT")"
+WORKSPACE_FULL="$(realpath -m "$WORKSPACE")"
+if [[ "$(dirname "$WORKSPACE_FULL")" != "$RUNS_ROOT_FULL" || "$(basename "$WORKSPACE_FULL")" != "$RUN_ID" ]]; then
+  echo "run folder $WORKSPACE_FULL does not resolve inside $RUNS_ROOT_FULL; refusing to continue" >&2; exit 2
+fi
+
 if (( START == 0 )) && [[ -d "$WORKSPACE" ]] && [[ -n "$(ls -A "$WORKSPACE")" ]]; then
   (( FORCE )) || { echo "run folder $WORKSPACE exists; use a new --run-id, --skip-to, or --force" >&2; exit 2; }
-  rm -rf "$WORKSPACE"
+  rm -rf -- "$WORKSPACE_FULL"
 fi
 if (( START > 0 )) && [[ ! -f "$METRICS" ]]; then echo "no $METRICS; cannot resume run $RUN_ID" >&2; exit 2; fi
 mkdir -p "$WORKSPACE"
