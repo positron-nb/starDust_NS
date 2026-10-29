@@ -169,6 +169,10 @@ stage_export() {
   local config; config="$(metric config_path)"
   [[ -f "$config" ]] || { echo "training config for run $RUN_ID not found: $config" >&2; exit 1; }
   reset_dir "$EXPORTS"
+  # PyTorch >= 2.6 defaults torch.load to weights_only=True; nerfstudio 1.1.5 checkpoints contain a
+  # numpy scalar and fail to load. The checkpoint was written by this run's own training, so the
+  # legacy (full) load is safe here.
+  export TORCH_FORCE_NO_WEIGHTS_ONLY_LOAD=1
   ns-export gaussian-splat --load-config "$config" --output-dir "$EXPORTS"
   mapfile -t plys < <(find "$EXPORTS" -maxdepth 1 -name '*.ply')
   (( ${#plys[@]} == 1 )) || { echo "expected one .ply in $EXPORTS, found ${#plys[@]}" >&2; exit 1; }

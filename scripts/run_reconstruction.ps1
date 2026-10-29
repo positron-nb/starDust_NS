@@ -162,6 +162,9 @@ Invoke-Stage 'export' {
   $config = $metrics['config_path']
   if (-not $config -or -not (Test-Path $config)) { throw "Training config for run $RunId not found ($config)." }
   Reset-Dir $exports
+  # PyTorch >= 2.6 defaults torch.load to weights_only=True, which nerfstudio 1.1.5 checkpoints fail;
+  # the checkpoint comes from this run's own training, so the legacy load is safe.
+  $env:TORCH_FORCE_NO_WEIGHTS_ONLY_LOAD = '1'
   Invoke-Native 'Gaussian-splat export' { ns-export gaussian-splat --load-config $config --output-dir $exports }
   $plys = @(Get-ChildItem $exports -Filter *.ply)
   if ($plys.Count -ne 1) { throw "Expected exactly one .ply in $exports, found $($plys.Count)." }
