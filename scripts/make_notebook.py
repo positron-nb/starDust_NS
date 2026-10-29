@@ -42,7 +42,7 @@ code("""
 !ns-train --help > /dev/null && echo "nerfstudio OK"
 !node --version || (curl -fsSL https://deb.nodesource.com/setup_22.x | bash - > /dev/null && apt-get -qq install -y nodejs > /dev/null && node --version)
 """)
-md("## 3. Upload the capture\nUpload one video (`.mp4`/`.mov`) **or** one `.zip` of photos.")
+md("## 3. Upload the capture\nUpload one video (`.mp4`/`.mov`) **or** one `.zip` of photos. Faster: run `extract_frames.py` + `check_images.py` locally and upload a zip of the kept `frame_*.jpg` files (tens of MB instead of hundreds).")
 code("""
 from google.colab import files
 import pathlib, zipfile, shutil
@@ -64,7 +64,12 @@ RUN_ID = "room-" + datetime.datetime.now().strftime("%Y%m%d-%H%M")
 WORKSPACE = f"data/runs/{RUN_ID}"
 if CAPTURE.suffix.lower() == ".zip":
     src = next((cap / "photos").rglob("*.jp*g")).parent
-    !bash scripts/run_reconstruction.sh --images "{src}" --run-id {RUN_ID} --matching exhaustive
+    # Frames from scripts/extract_frames.py (frame_00001.jpg, ...) are in video order: sequential
+    # matching is much faster on Colab's CPU COLMAP. An unordered photo set needs exhaustive.
+    ordered = all(p.name.startswith("frame_") for p in src.glob("*.jp*g"))
+    MATCHING = "sequential" if ordered else "exhaustive"
+    print("matching:", MATCHING)
+    !bash scripts/run_reconstruction.sh --images "{src}" --run-id {RUN_ID} --matching {MATCHING}
 else:
     !bash scripts/run_reconstruction.sh --video "{CAPTURE}" --run-id {RUN_ID} --fps 2
 """)
