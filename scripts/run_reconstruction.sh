@@ -151,8 +151,13 @@ stage_train() {
   export MAX_JOBS="${MAX_JOBS:-2}"
   # A build killed mid-way leaves torch's lock file behind, which makes the next build wait forever.
   rm -f "$HOME"/.cache/torch_extensions/*/gsplat*/lock 2>/dev/null || true
+  # Full log goes to train.log; gsplat's build spinner (one line per frame in Colab) is dropped
+  # from the console because thousands of lines make the notebook unusable. pipefail keeps
+  # ns-train's exit status (tee and sed always succeed).
+  echo "training log: $WORKSPACE/train.log"
   ns-train "$METHOD" --data "$PROCESSED" --output-dir "$OUTPUTS" --experiment-name "$RUN_ID" --timestamp run \
-    --max-num-iterations "$MAX_ITERS" --viewer.quit-on-train-completion True
+    --max-num-iterations "$MAX_ITERS" --viewer.quit-on-train-completion True 2>&1 \
+    | tee "$WORKSPACE/train.log" | sed -u '/Setting up CUDA/d'
   mapfile -t configs < <(find "$OUTPUTS" -name config.yml)
   (( ${#configs[@]} == 1 )) || { echo "expected one config.yml under $OUTPUTS, found ${#configs[@]}" >&2; exit 1; }
   metric config_path "\"$(realpath "${configs[0]}")\""
