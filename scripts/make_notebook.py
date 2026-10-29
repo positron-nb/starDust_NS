@@ -59,7 +59,9 @@ print("capture:", CAPTURE)
 md("## 4. Run the pipeline\nEach run gets its own folder `data/runs/<RUN_ID>`. The pipeline **stops** if fewer than 40 frames pass the quality gate or fewer than 70 % register in COLMAP, so no GPU time is spent on bad data. Sequential matching suits a continuous video walk; for an unordered photo set use `--matching exhaustive`.")
 code("""
 %%time
-import datetime
+import datetime, os
+os.chdir("/content/namma-space")  # the clone folder; scripts/ is relative to it
+assert os.path.exists("scripts/run_reconstruction.sh"), "repo not found: re-run section 1 (Get the code)"
 RUN_ID = "room-" + datetime.datetime.now().strftime("%Y%m%d-%H%M")
 WORKSPACE = f"data/runs/{RUN_ID}"
 if CAPTURE.suffix.lower() == ".zip":
@@ -75,7 +77,8 @@ else:
 """)
 md("## 5. Inspect the results")
 code("""
-import json
+import json, os
+os.chdir("/content/namma-space")
 print(json.dumps(json.load(open(f"{WORKSPACE}/run_metrics.json")), indent=2))
 print(open(f"{WORKSPACE}/quality_summary.json").read())
 !ls -la public/models {WORKSPACE}/exports
