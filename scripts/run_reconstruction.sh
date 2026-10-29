@@ -6,13 +6,15 @@
 #   scripts/run_reconstruction.sh --video capture/room.mp4
 #   scripts/run_reconstruction.sh --images capture/photos --matching exhaustive --run-id bedroom-v2
 #   scripts/run_reconstruction.sh --run-id bedroom-v2 --skip-to export
+#   scripts/run_reconstruction.sh --images frames/ --colmap-model sparse/0 --run-id room-gpu
+#       (train from a COLMAP model built elsewhere, e.g. scripts/colmap_gpu.ps1 on a local GPU)
 set -euo pipefail
 trap 'echo "error: pipeline stopped at line $LINENO (exit $?) while running: $BASH_COMMAND" >&2' ERR
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 VIDEO="" IMAGES="" RUN_ID="$(date +%Y%m%d-%H%M%S)" RUNS_ROOT=data/runs FPS=2 MAX_WIDTH=1600
 MIN_FRAMES=40 MIN_REGISTERED=0.7 MATCHING=sequential METHOD=splatfacto MAX_ITERS=30000
-SKIP_TO=frames MODEL_OUT=public/models FORCE=0
+SKIP_TO=frames MODEL_OUT=public/models FORCE=0 COLMAP_MODEL=""
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -30,6 +32,7 @@ while [[ $# -gt 0 ]]; do
     --skip-to) SKIP_TO="$2"; shift 2 ;;
     --model-out) MODEL_OUT="$2"; shift 2 ;;
     --force) FORCE=1; shift ;;
+    --colmap-model) COLMAP_MODEL="$2"; shift 2 ;;
     *) echo "unknown argument: $1" >&2; exit 2 ;;
   esac
 done
@@ -110,7 +113,12 @@ stage_frames() {
   else
     echo "pass --video or --images" >&2; exit 2
   fi
-  python3 "$ROOT/scripts/check_images.py" "$IMAGES_DIR" --move-rejects --min-frames "$MIN_FRAMES"
+  if [[ -n "$COLMAP_MODEL" ]]; then
+    # The model was built from exactly these frames; re-gating could drop frames the model references.
+    echo "using a precomputed COLMAP model: skipping the quality gate (frames were gated before SfM)"
+  else
+    python3 "$ROOT/scripts/check_images.py" "$IMAGES_DIR" --move-rejects --min-frames "$MIN_FRAMES"
+  fi
   metric frames_used "$(find "$IMAGES_DIR" -maxdepth 1 -type f | wc -l)"
 }
 
@@ -124,8 +132,19 @@ stage_colmap() {
     echo "COLMAP was built without CUDA: running feature extraction/matching on CPU (--no-gpu)"
     gpu_flag=(--no-gpu)
   fi
+  local colmap_args=(--matching-method "$MATCHING" "${gpu_flag[@]}")
+  if [[ -n "$COLMAP_MODEL" ]]; then
+    for f in cameras.bin images.bin points3D.bin; do
+      [[ -f "$COLMAP_MODEL/$f" ]] || { echo "error: $COLMAP_MODEL/$f missing (expected a COLMAP sparse model)" >&2; exit 2; }
+    done
+    mkdir -p "$PROCESSED/colmap/sparse/0"
+    cp "$COLMAP_MODEL"/*.bin "$PROCESSED/colmap/sparse/0/"
+    metric colmap_model "\"$(realpath "$COLMAP_MODEL")\""
+    echo "converting precomputed COLMAP model (no SfM on this machine)"
+    colmap_args=(--skip-colmap)
+  fi
   if ! ns-process-data images --data "$IMAGES_DIR" --output-dir "$PROCESSED" \
-      --matching-method "$MATCHING" --verbose "${gpu_flag[@]}"; then
+      --verbose "${colmap_args[@]}"; then
     echo "error: ns-process-data / COLMAP failed (see the log above)" >&2
     exit 1
   fi
