@@ -7,6 +7,7 @@
 #   scripts/run_reconstruction.sh --images capture/photos --matching exhaustive --run-id bedroom-v2
 #   scripts/run_reconstruction.sh --run-id bedroom-v2 --skip-to export
 set -euo pipefail
+trap 'echo "error: pipeline stopped at line $LINENO (exit $?) while running: $BASH_COMMAND" >&2' ERR
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 VIDEO="" IMAGES="" RUN_ID="$(date +%Y%m%d-%H%M%S)" RUNS_ROOT=data/runs FPS=2 MAX_WIDTH=1600
@@ -115,7 +116,19 @@ stage_frames() {
 
 stage_colmap() {
   reset_dir "$PROCESSED"
-  ns-process-data images --data "$IMAGES_DIR" --output-dir "$PROCESSED" --matching-method "$MATCHING"
+  # Headless servers (Colab) have no display: Qt must run offscreen or COLMAP aborts.
+  export QT_QPA_PLATFORM=offscreen
+  # Distribution COLMAP builds (apt) lack CUDA; GPU SIFT then crashes, so fall back to CPU.
+  local gpu_flag=()
+  if ! colmap -h 2>&1 | grep -qi "with CUDA"; then
+    echo "COLMAP was built without CUDA: running feature extraction/matching on CPU (--no-gpu)"
+    gpu_flag=(--no-gpu)
+  fi
+  if ! ns-process-data images --data "$IMAGES_DIR" --output-dir "$PROCESSED" \
+      --matching-method "$MATCHING" --verbose "${gpu_flag[@]}"; then
+    echo "error: ns-process-data / COLMAP failed (see the log above)" >&2
+    exit 1
+  fi
   assert_fresh "$PROCESSED/transforms.json" "$STAGE_START" transforms.json
   python3 - "$PROCESSED/transforms.json" "$IMAGES_DIR" "$METRICS" "$MIN_REGISTERED" <<'PY'
 import json, os, sys
