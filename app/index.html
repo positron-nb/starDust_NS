@@ -53,11 +53,16 @@
           <li><span class="kbd-group"><kbd>R</kbd></span>Reset to start point</li>
           <li><span class="kbd-group"><kbd class="wide">Esc</kbd></span>Release mouse / exit</li>
         </ul>
+        <p class="drop-hint">Have your own splat? Drop a <code>.spz</code>, <code>.ply</code> or <code>.sog</code> file anywhere on the page to view it. It stays on your computer.</p>
       </div>
     </section>
 
     <!-- Floating controls -->
     <nav class="dock" aria-label="Viewer controls">
+      <button id="btn-open" class="icon-btn" type="button" title="Open a model file from your computer (or drop it on the page)" aria-label="Open model file">
+        <svg viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /><path d="M12 10v6M9 13l3-3 3 3" /></svg>
+      </button>
+      <input id="file-input" type="file" accept=".spz,.ply,.sog,.splat,.ksplat" hidden />
       <button id="btn-reset" class="icon-btn" type="button" title="Reset camera (R)" aria-label="Reset camera">
         <svg viewBox="0 0 24 24"><path d="M4 12a8 8 0 1 0 2.4-5.7M4 4v4.5h4.5" /></svg>
       </button>

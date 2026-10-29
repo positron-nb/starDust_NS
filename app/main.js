@@ -26,6 +26,7 @@ const ui = {
   start: $("start"), modelName: $("model-name"), provenance: $("provenance"),
   hud: $("hud"), fps: $("hud-fps"), splats: $("hud-splats"), size: $("hud-size"), load: $("hud-load"),
   pos: $("hud-pos"), mode: $("hud-mode"), toast: $("toast"), touchNote: $("touch-note"),
+  btnOpen: $("btn-open"), fileInput: $("file-input"),
   btnReset: $("btn-reset"), btnExit: $("btn-exit"), btnFull: $("btn-fullscreen"), btnHud: $("btn-hud"),
 };
 
@@ -96,22 +97,14 @@ async function boot() {
   } catch (err) {
     return fail("Scene manifest missing", err);
   }
-  const m = state.manifest;
-  ui.modelName.textContent = m.name;
-  ui.provenance.hidden = false;
-  ui.provenance.textContent = m.provenance === "reconstruction" ? "Real capture" : m.provenance === "synthetic" ? "Synthetic test scene" : m.provenance;
-  ui.provenance.className = `badge ${m.provenance === "reconstruction" ? "real" : "synthetic"}`;
-  if (m.provenance !== "reconstruction") {
-    ui.sub.textContent = "Procedurally generated test scene used to verify the viewer. It is not a reconstruction of a real room.";
-  }
-  scene.background = new THREE.Color(m.background);
+  showModelInfo();
   applyTransform();
   resetCamera();
 
   const t0 = performance.now();
   let bytes;
   try {
-    bytes = await fetchWithProgress(m.file, (loaded, total) => {
+    bytes = await fetchWithProgress(state.manifest.file, (loaded, total) => {
       const mb = (loaded / 2 ** 20).toFixed(1);
       if (total) setLoading(`Downloading model · ${mb} / ${(total / 2 ** 20).toFixed(1)} MB`, loaded / total);
       else setLoading(`Downloading model · ${mb} MB`, null);
@@ -119,33 +112,128 @@ async function boot() {
   } catch (err) {
     return fail("Model file could not be downloaded", err);
   }
-  ui.size.textContent = `${(bytes.byteLength / 2 ** 20).toFixed(1)} MB`;
+  if (await decodeModel(bytes, state.manifest.file.split("/").pop(), t0)) finishLoad();
+}
 
+function showModelInfo() {
+  const m = state.manifest;
+  ui.modelName.textContent = m.name;
+  ui.provenance.hidden = false;
+  const label = { reconstruction: "Real capture", synthetic: "Synthetic test scene", local: "Local file" };
+  ui.provenance.textContent = label[m.provenance] ?? m.provenance;
+  ui.provenance.className = `badge ${m.provenance === "reconstruction" ? "real" : "synthetic"}`;
+  ui.sub.textContent = m.provenance === "reconstruction"
+    ? "Reconstructed from a smartphone capture. Rendered live in your browser, nothing to install."
+    : m.provenance === "local"
+      ? "Opened from your computer: nothing is uploaded. Alignment is estimated automatically from the splats."
+      : "Procedurally generated test scene used to verify the viewer. It is not a reconstruction of a real room.";
+  scene.background = new THREE.Color(m.background);
+}
+
+// Decode splat bytes into the scene. Returns false (after showing the error) on failure.
+async function decodeModel(bytes, fileName, t0) {
+  ui.size.textContent = `${(bytes.byteLength / 2 ** 20).toFixed(1)} MB`;
   setLoading("Decoding Gaussian splats…", null);
   try {
-    if (splatMesh) { modelRoot.remove(splatMesh); splatMesh.dispose?.(); }
-    splatMesh = new SplatMesh({ fileBytes: bytes, fileName: m.file.split("/").pop() });
+    if (splatMesh) { modelRoot.remove(splatMesh); splatMesh.dispose?.(); splatMesh = null; }
+    splatMesh = new SplatMesh({ fileBytes: bytes, fileName });
     modelRoot.add(splatMesh);
     await splatMesh.initialized;
   } catch (err) {
-    return fail("Model file could not be decoded", err);
+    fail("Model file could not be decoded", err);
+    return false;
   }
   const loadSeconds = (performance.now() - t0) / 1000;
   const count = splatMesh.packedSplats?.numSplats ?? splatMesh.extSplats?.numSplats ?? splatMesh.numSplats;
   ui.splats.textContent = Number.isFinite(count) ? count.toLocaleString() : "–";
   ui.load.textContent = `${loadSeconds.toFixed(1)} s`;
-  console.info(`[namma-space] loaded ${m.file}: ${count} splats, ${(bytes.byteLength / 2 ** 20).toFixed(1)} MB in ${loadSeconds.toFixed(2)} s`);
+  console.info(`[namma-space] loaded ${fileName}: ${count} splats, ${(bytes.byteLength / 2 ** 20).toFixed(1)} MB in ${loadSeconds.toFixed(2)} s`);
+  return true;
+}
 
+function finishLoad() {
   state.loaded = true;
   updateBounds();
   resetCamera();
   setLoading("Ready", 1);
   ui.loader.hidden = true;
+  ui.error.hidden = true;
   ui.start.disabled = false;
   setMode("ready");
   ui.start.focus({ preventScroll: true });
   if (CALIBRATE) initCalibration();
 }
+
+// ---------- Open a local model file (button or drag-and-drop; nothing leaves the browser) ----------
+const LOCAL_EXT = /\.(spz|ply|sog|splat|ksplat)$/i;
+
+async function openLocalFile(file) {
+  if (!file) return;
+  if (!LOCAL_EXT.test(file.name)) {
+    toast("Unsupported file: open a .spz, .ply, .sog, .splat or .ksplat model");
+    return;
+  }
+  if (document.pointerLockElement) document.exitPointerLock();
+  state.download?.abort();
+  state.keys.clear();
+  state.loaded = false;
+  setMode("loading");
+  showOverlay();
+  ui.title.textContent = "Walk through the room";
+  ui.start.textContent = "Start walkthrough";
+  ui.start.disabled = true;
+  ui.error.hidden = true;
+  setLoading(`Reading ${file.name}…`, null);
+
+  // Mutate in place: the calibration panel keeps a reference to this object.
+  const m = state.manifest;
+  for (const key of Object.keys(m)) delete m[key];
+  Object.assign(m, structuredClone(DEFAULTS), { name: file.name, provenance: "local", file: file.name });
+  showModelInfo();
+  applyTransform();
+
+  const t0 = performance.now();
+  let bytes;
+  try {
+    bytes = new Uint8Array(await file.arrayBuffer());
+  } catch (err) {
+    return fail("File could not be read", err);
+  }
+  if (!(await decodeModel(bytes, file.name, t0))) return;
+  autoAlign();
+  finishLoad();
+  calibRefresh?.();
+}
+
+// Estimate floor, eye height, walking speed and bounds from the splats, the same way
+// scripts/splat_info.py writes a draft manifest (assumes a nerfstudio-style z-up export).
+function autoAlign() {
+  const s = splatStats();
+  if (!s) return;
+  const m = state.manifest;
+  const height = Math.max(1e-3, s.ceiling - s.floor);
+  const pad = 0.05 * Math.min(s.max[0] - s.min[0], s.max[1] - s.min[1]);
+  m.floorY = round(s.floor);
+  m.eyeHeight = round(0.62 * height);
+  m.walkSpeed = round(1.4 * height / 2.6);
+  m.bounds = { min: [round(s.min[0] + pad), round(s.min[1] + pad)], max: [round(s.max[0] - pad), round(s.max[1] - pad)] };
+  m.start = { position: [round((s.min[0] + s.max[0]) / 2), round((s.min[1] + s.max[1]) / 2)], yawDeg: 0 };
+}
+
+ui.btnOpen.addEventListener("click", () => ui.fileInput.click());
+ui.fileInput.addEventListener("change", () => { openLocalFile(ui.fileInput.files[0]); ui.fileInput.value = ""; });
+window.addEventListener("dragover", (e) => {
+  if (![...(e.dataTransfer?.types || [])].includes("Files")) return;
+  e.preventDefault();
+  document.body.classList.add("dropping");
+});
+window.addEventListener("dragleave", (e) => { if (!e.relatedTarget) document.body.classList.remove("dropping"); });
+window.addEventListener("drop", (e) => {
+  if (!e.dataTransfer?.files?.length) return;
+  e.preventDefault();
+  document.body.classList.remove("dropping");
+  openLocalFile(e.dataTransfer.files[0]);
+});
 
 // Streams the model with progress. When Content-Length is known (and the response is not
 // content-encoded) chunks are written straight into one preallocated buffer, so peak memory is
@@ -524,7 +612,9 @@ renderer.setAnimationLoop((now) => {
 window.addEventListener("unhandledrejection", (e) => console.error("[namma-space] unhandled:", e.reason));
 
 // ---------- Calibration panel (?calibrate) ----------
+let calibRefresh = null; // re-syncs panel inputs after a different model is opened
 function initCalibration() {
+  if (calibRefresh) { calibRefresh(); return; }
   const panel = $("calib");
   panel.hidden = false;
   const m = state.manifest;
@@ -594,9 +684,18 @@ function initCalibration() {
   $("c-poly-clear").addEventListener("click", () => {
     m.walkPolygon = null; state.draftPolygon = null; updateBounds(); polyUi(); renderJson(); toast("Walk outline cleared");
   });
-  $("c-calibrated").checked = !!m.calibrated;
   $("c-calibrated").addEventListener("change", (e) => { m.calibrated = e.target.checked; renderJson(); });
-  polyUi();
+  calibRefresh = () => {
+    for (const [inputId, outId, get, , unit] of fields) {
+      $(inputId).value = get();
+      $(outId).textContent = `${round(get())}${unit}`;
+    }
+    $("c-calibrated").checked = !!m.calibrated;
+    state.draftPolygon = null;
+    polyUi();
+    renderJson();
+  };
+  calibRefresh();
   $("c-copy").addEventListener("click", async () => {
     try { await navigator.clipboard.writeText(manifestJson()); toast("Manifest JSON copied"); }
     catch { toast("Clipboard blocked: copy from the box below"); }

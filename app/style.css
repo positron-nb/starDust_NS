@@ -84,6 +84,9 @@ button { font: inherit; color: inherit; }
 .kbd-group { display: inline-flex; gap: 3px; min-width: 96px; }
 kbd { font-family: var(--mono); font-size: 11px; min-width: 22px; height: 22px; padding: 0 5px; display: inline-grid; place-items: center; border-radius: 6px; color: var(--text); background: rgba(255, 255, 255, 0.06); border: 1px solid var(--line-strong); border-bottom-width: 2px; }
 
+.drop-hint { margin: 16px 0 0; padding-top: 14px; border-top: 1px solid var(--line); font-size: 12px; line-height: 1.5; color: var(--muted); }
+body.dropping::after { content: "Drop the model file to open it"; position: fixed; inset: 12px; z-index: 30; display: grid; place-items: center; border: 2px dashed var(--accent); border-radius: 20px; background: rgba(7, 8, 11, 0.78); color: var(--accent); font-size: 18px; font-weight: 600; pointer-events: none; }
+
 /* Dock */
 .dock { position: fixed; right: 16px; bottom: 16px; z-index: 5; display: flex; gap: 6px; padding: 6px; border-radius: var(--radius); background: var(--panel); border: 1px solid var(--line); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); }
 .icon-btn { width: 40px; height: 40px; border-radius: 10px; border: 0; background: transparent; cursor: pointer; display: grid; place-items: center; transition: background 0.15s; }
