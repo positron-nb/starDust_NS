@@ -2,15 +2,15 @@
 
 Rule: only numbers that were actually measured go here. Every value has a source file or measurement method. `PENDING` means the measurement has not been made yet.
 
-## A. Real-room reconstruction: PENDING (no capture processed yet)
+## A. Real-room reconstruction (capture processed 2026-10-29; reconstruction PENDING)
 
 | Metric | Value | Source |
 |---|---|---|
-| Space captured (room, approx. area) | PENDING | capture notes |
+| Space captured | Team member's room (window, desk, wall hooks, wardrobe); area PENDING | capture notes |
 | Phone, lens, video mode | PENDING | phone metadata |
-| Video duration / resolution / fps | PENDING | `data/runs/<RunId>/extract_report.json` |
-| Candidate frames → kept by sharpness selection | PENDING | `extract_report.json` |
-| Frames after quality gate (rejected: blur / dark / bright / low-texture / duplicate) | PENDING | `quality_summary.json` |
+| Video duration / resolution / fps | 211.4 s (3:31), 2560×1440, 59.99 fps, HEVC, 611 MB | ffmpeg probe of `capture/room.mp4` |
+| Candidate frames → kept by sharpness selection | 1,269 candidates (6 fps) → 423 frames (2 fps, sharpest of 3), 1600×900 | `data/runs/room-check/extract_report.json` |
+| Frames after quality gate | 345 kept / 78 rejected (18.4 %): 77 blur, 2 low-texture, 1 duplicate. Median sharpness 263.3, threshold 92.2. The worst rejects are tilts up at the bare ceiling or wall. | `data/runs/room-check/quality_summary.json` |
 | Registered cameras (COLMAP) / frames used / ratio | PENDING | `run_metrics.json → registered_cameras, frames_used, registration_ratio` |
 | COLMAP time | PENDING | `run_metrics.json → colmap_seconds` |
 | Training method / iterations / time | PENDING | `run_metrics.json → method, max_iterations, train_seconds` |
