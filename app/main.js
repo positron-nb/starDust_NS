@@ -528,6 +528,8 @@ function initCalibration() {
   const panel = $("calib");
   panel.hidden = false;
   const m = state.manifest;
+  // Calibration-only console hook for scripted inspection (never exposed in normal viewing).
+  window.__namma = { camera, state, applyLook, applyTransform, updateBounds, eyeY, splatStats, renderJson };
   const fields = [
     ["c-rx", "o-rx", () => m.rotationDeg[0], (v) => (m.rotationDeg[0] = v), "°"],
     ["c-ry", "o-ry", () => m.rotationDeg[1], (v) => (m.rotationDeg[1] = v), "°"],

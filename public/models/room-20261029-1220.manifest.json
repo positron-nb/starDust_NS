@@ -1,0 +1,68 @@
+{
+  "name": "Reconstructed room room-20261029-1220",
+  "provenance": "reconstruction",
+  "file": "models/room-20261029-1220.spz",
+  "rotationDeg": [
+    -90,
+    0,
+    0
+  ],
+  "scale": 1.949,
+  "floorY": -1.257,
+  "eyeHeight": 1.6,
+  "walkSpeed": 1.4,
+  "sprintMultiplier": 2,
+  "start": {
+    "position": [
+      0.066,
+      -0.007
+    ],
+    "yawDeg": -7.774
+  },
+  "bounds": {
+    "min": [
+      -2.08,
+      -2.18
+    ],
+    "max": [
+      0.735,
+      1.912
+    ]
+  },
+  "walkPolygon": [
+    [
+      -2.08,
+      -1.867
+    ],
+    [
+      -2.035,
+      -2.104
+    ],
+    [
+      -1.998,
+      -2.18
+    ],
+    [
+      0.593,
+      -0.593
+    ],
+    [
+      0.678,
+      -0.387
+    ],
+    [
+      0.735,
+      -0.078
+    ],
+    [
+      0.129,
+      1.81
+    ],
+    [
+      0.051,
+      1.912
+    ]
+  ],
+  "background": "#07080b",
+  "calibrated": true
+}
