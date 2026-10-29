@@ -186,15 +186,25 @@ stage_web() {
   ply="$(metric export_ply)"
   [[ -f "$ply" ]] || { echo "exported PLY for run $RUN_ID not found: $ply" >&2; exit 1; }
   mkdir -p "$MODEL_OUT"
-  sog="$MODEL_OUT/$RUN_ID.sog"; draft="$MODEL_OUT/$RUN_ID.manifest.json"
-  rm -f "$sog" "$draft"
-  npx --yes @playcanvas/splat-transform@3.10.1 "$ply" --filter-nan "$sog" -w
-  assert_fresh "$sog" "$STAGE_START" "SOG web model"
+  local sog="$MODEL_OUT/$RUN_ID.sog" spz="$MODEL_OUT/$RUN_ID.spz" model
+  draft="$MODEL_OUT/$RUN_ID.manifest.json"
+  rm -f "$sog" "$spz" "$draft"
+  # SOG's k-means compression needs a WebGPU adapter, which headless servers (Colab) lack.
+  # Fall back to SPZ (CPU-only; v3 for broad loader support). Spark loads both.
+  if npx --yes @playcanvas/splat-transform@3.10.1 "$ply" --filter-nan "$sog" -w && [[ -s "$sog" ]]; then
+    model="$sog"
+  else
+    rm -f "$sog"
+    echo "SOG compression unavailable (no WebGPU adapter): writing SPZ instead"
+    npx --yes @playcanvas/splat-transform@3.10.1 "$ply" --filter-nan "$spz" --spz-version 3 -w
+    model="$spz"
+  fi
+  assert_fresh "$model" "$STAGE_START" "web model"
   python3 "$ROOT/scripts/splat_info.py" "$ply" --up z --json "$WORKSPACE/splat_info.json" \
-    --manifest-out "$draft" --model-file "models/$RUN_ID.sog" --name "Reconstructed room $RUN_ID (uncalibrated draft)"
+    --manifest-out "$draft" --model-file "models/$(basename "$model")" --name "Reconstructed room $RUN_ID (uncalibrated draft)"
   assert_fresh "$draft" "$STAGE_START" "draft manifest"
-  metric web_model "\"$sog\""
-  metric web_model_bytes "$(bytes "$sog")"
+  metric web_model "\"$model\""
+  metric web_model_bytes "$(bytes "$model")"
   metric draft_manifest "\"$draft\""
   echo "Calibrate: npm run dev, then http://localhost:5173/?calibrate&manifest=models/$RUN_ID.manifest.json"
 }
