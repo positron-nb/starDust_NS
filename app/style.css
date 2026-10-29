@@ -1,13 +1,13 @@
 :root {
-  --bg: #07080b;
+  --bg: #07071a;
   --panel: rgba(14, 16, 22, 0.72);
-  --panel-solid: #0f1218;
+  --panel-solid: #100f26;
   --line: rgba(255, 255, 255, 0.09);
   --line-strong: rgba(255, 255, 255, 0.18);
   --text: #eef1f6;
   --muted: #8d95a5;
-  --accent: #7cf0c4;
-  --accent-ink: #04140e;
+  --accent: #ffd98a;
+  --accent-ink: #1b1204;
   --warn: #f5c26b;
   --danger: #ff7a7a;
   --radius: 14px;
@@ -34,8 +34,8 @@ button { font: inherit; color: inherit; }
   background: var(--panel); border: 1px solid var(--line);
   backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
 }
-.brand-mark { width: 34px; height: 34px; border-radius: 9px; background: #10141b; display: grid; place-items: center; border: 1px solid var(--line); }
-.brand-mark svg { width: 22px; height: 22px; fill: none; stroke: var(--accent); stroke-width: 3; stroke-linejoin: round; stroke-linecap: round; }
+.brand-mark { width: 34px; height: 34px; border-radius: 9px; background: #14123a; display: grid; place-items: center; border: 1px solid var(--line); }
+.brand-mark svg { width: 22px; height: 22px; fill: var(--accent); stroke: none; filter: drop-shadow(0 0 4px rgba(255, 217, 138, 0.6)); }
 .brand-name { font-weight: 700; font-size: 14px; letter-spacing: 0.02em; }
 .brand-model { font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 8px; margin-top: 2px; }
 .badge { font-size: 10px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; padding: 2px 7px; border-radius: 999px; border: 1px solid currentColor; }
@@ -45,7 +45,12 @@ button { font: inherit; color: inherit; }
 /* Overlay */
 .overlay {
   position: fixed; inset: 0; z-index: 10; display: grid; place-items: center; padding: 16px;
-  background: radial-gradient(1200px 600px at 50% 40%, rgba(7, 8, 11, 0.35), rgba(7, 8, 11, 0.82));
+  background:
+    radial-gradient(1.5px 1.5px at 12% 22%, #fff 50%, transparent 51%), radial-gradient(1px 1px at 78% 14%, #ffd98a 50%, transparent 51%),
+    radial-gradient(1.5px 1.5px at 88% 68%, #fff 50%, transparent 51%), radial-gradient(1px 1px at 30% 82%, #c4b5fd 50%, transparent 51%),
+    radial-gradient(1px 1px at 55% 10%, #fff 50%, transparent 51%), radial-gradient(1px 1px at 6% 60%, #ffd98a 50%, transparent 51%),
+    radial-gradient(1.5px 1.5px at 64% 90%, #fff 50%, transparent 51%), radial-gradient(1px 1px at 94% 36%, #c4b5fd 50%, transparent 51%),
+    radial-gradient(1200px 600px at 50% 40%, rgba(40, 24, 90, 0.35), rgba(7, 7, 26, 0.86));
   transition: opacity 0.25s ease;
 }
 .overlay.hidden { opacity: 0; pointer-events: none; }
@@ -60,7 +65,7 @@ button { font: inherit; color: inherit; }
 
 .loader { margin-bottom: 18px; }
 .bar { height: 6px; border-radius: 999px; background: rgba(255, 255, 255, 0.07); overflow: hidden; }
-.bar-fill { height: 100%; width: 0%; background: linear-gradient(90deg, #4fd3a3, var(--accent)); transition: width 0.15s linear; }
+.bar-fill { height: 100%; width: 0%; background: linear-gradient(90deg, #a78bfa, var(--accent)); transition: width 0.15s linear; }
 .bar-fill.indeterminate { width: 35%; animation: slide 1.2s ease-in-out infinite; }
 @keyframes slide { from { transform: translateX(-100%); } to { transform: translateX(300%); } }
 .loader-row { display: flex; justify-content: space-between; margin-top: 8px; font-size: 12px; color: var(--muted); }
@@ -74,7 +79,7 @@ button { font: inherit; color: inherit; }
 .btn:active { transform: translateY(1px); }
 .btn:focus-visible, .icon-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .btn.primary { width: 100%; background: var(--accent); color: var(--accent-ink); }
-.btn.primary:hover:not(:disabled) { background: #9af5d4; }
+.btn.primary:hover:not(:disabled) { background: #ffe6b0; }
 .btn.primary:disabled { opacity: 0.35; cursor: not-allowed; }
 .btn.ghost { background: transparent; border-color: var(--line-strong); padding: 8px 14px; font-size: 13px; }
 .btn.ghost:hover { background: rgba(255, 255, 255, 0.06); }
@@ -91,7 +96,7 @@ body.dropping::after { content: "Drop the model file to open it"; position: fixe
 .dock { position: fixed; right: 16px; bottom: 16px; z-index: 5; display: flex; gap: 6px; padding: 6px; border-radius: var(--radius); background: var(--panel); border: 1px solid var(--line); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); }
 .icon-btn { width: 40px; height: 40px; border-radius: 10px; border: 0; background: transparent; cursor: pointer; display: grid; place-items: center; transition: background 0.15s; }
 .icon-btn:hover { background: rgba(255, 255, 255, 0.08); }
-.icon-btn[aria-pressed="true"] { background: rgba(124, 240, 196, 0.12); }
+.icon-btn[aria-pressed="true"] { background: rgba(255, 217, 138, 0.14); }
 .icon-btn svg { width: 20px; height: 20px; fill: none; stroke: var(--text); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 .icon-btn.danger svg { stroke: var(--danger); }
 

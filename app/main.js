@@ -1,4 +1,4 @@
-// Namma Space walkthrough viewer: Three.js + Spark (Gaussian splat renderer).
+// StarDust walkthrough viewer: Three.js + Spark (Gaussian splat renderer).
 // The model and its alignment come from public/models/manifest.json, so a new room
 // can be swapped in without touching this file (see README "Replacing the model").
 import * as THREE from "three";
@@ -89,7 +89,7 @@ async function boot() {
     let raw;
     try { raw = await res.json(); } catch (e) { throw new LoadError(`${MANIFEST_URL} is not valid JSON: ${e.message}`); }
     const { manifest, errors, warnings } = validateManifest(raw);
-    for (const w of warnings) console.warn(`[namma-space] manifest: ${w}`);
+    for (const w of warnings) console.warn(`[stardust] manifest: ${w}`);
     if (errors.length) {
       return fail("Scene manifest is invalid", new LoadError(`${MANIFEST_URL}: ${errors.join("; ")}`));
     }
@@ -147,7 +147,7 @@ async function decodeModel(bytes, fileName, t0) {
   const count = splatMesh.packedSplats?.numSplats ?? splatMesh.extSplats?.numSplats ?? splatMesh.numSplats;
   ui.splats.textContent = Number.isFinite(count) ? count.toLocaleString() : "–";
   ui.load.textContent = `${loadSeconds.toFixed(1)} s`;
-  console.info(`[namma-space] loaded ${fileName}: ${count} splats, ${(bytes.byteLength / 2 ** 20).toFixed(1)} MB in ${loadSeconds.toFixed(2)} s`);
+  console.info(`[stardust] loaded ${fileName}: ${count} splats, ${(bytes.byteLength / 2 ** 20).toFixed(1)} MB in ${loadSeconds.toFixed(2)} s`);
   return true;
 }
 
@@ -309,7 +309,7 @@ function setLoading(text, fraction) {
 }
 
 function fail(title, err) {
-  console.error(`[namma-space] ${title}:`, err);
+  console.error(`[stardust] ${title}:`, err);
   state.mode = "error";
   ui.loader.hidden = true;
   ui.error.hidden = false;
@@ -609,7 +609,7 @@ renderer.setAnimationLoop((now) => {
   }
 });
 
-window.addEventListener("unhandledrejection", (e) => console.error("[namma-space] unhandled:", e.reason));
+window.addEventListener("unhandledrejection", (e) => console.error("[stardust] unhandled:", e.reason));
 
 // ---------- Calibration panel (?calibrate) ----------
 let calibRefresh = null; // re-syncs panel inputs after a different model is opened
@@ -619,7 +619,7 @@ function initCalibration() {
   panel.hidden = false;
   const m = state.manifest;
   // Calibration-only console hook for scripted inspection (never exposed in normal viewing).
-  window.__namma = { camera, state, applyLook, applyTransform, updateBounds, eyeY, splatStats, renderJson };
+  window.__stardust = { camera, state, applyLook, applyTransform, updateBounds, eyeY, splatStats, renderJson };
   const fields = [
     ["c-rx", "o-rx", () => m.rotationDeg[0], (v) => (m.rotationDeg[0] = v), "°"],
     ["c-ry", "o-ry", () => m.rotationDeg[1], (v) => (m.rotationDeg[1] = v), "°"],

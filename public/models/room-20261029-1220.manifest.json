@@ -1,5 +1,5 @@
 {
-  "name": "Reconstructed room room-20261029-1220",
+  "name": "StarDust room",
   "provenance": "reconstruction",
   "file": "models/room-20261029-1220.spz",
   "rotationDeg": [
@@ -63,6 +63,6 @@
       1.912
     ]
   ],
-  "background": "#07080b",
+  "background": "#07071a",
   "calibrated": true
 }
