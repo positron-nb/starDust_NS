@@ -2,185 +2,193 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>Namma Space: Technical Abstract (Round 1)</title>
+<title>StarDust: Technical Abstract (Round 1)</title>
 <style>
-  @page { size: A4; margin: 15mm 15mm 14mm 15mm; }
-  :root { --ink:#141821; --muted:#5a6272; --line:#d9dde4; --accent:#0e8f6a; --soft:#f3f6f8; --pend:#b35c00; }
+  @page { size: A4; margin: 14mm 14mm 13mm 14mm; }
+  :root { --ink:#141821; --muted:#5a6272; --line:#d9dde4; --accent:#4338ca; --soft:#f3f4fa; --gold:#b7791f; }
   * { box-sizing: border-box; }
-  body { font-family: "Segoe UI", Inter, Arial, sans-serif; color: var(--ink); font-size: 9.6pt; line-height: 1.42; margin: 0; }
-  h1 { font-size: 19pt; margin: 0 0 2pt; letter-spacing: -0.01em; }
-  h2 { font-size: 11.5pt; margin: 11pt 0 4pt; color: var(--accent); border-bottom: 1px solid var(--line); padding-bottom: 2pt; break-after: avoid; }
-  h3 { font-size: 10pt; margin: 7pt 0 2pt; break-after: avoid; }
-  p { margin: 0 0 5pt; }
-  ul, ol { margin: 0 0 5pt; padding-left: 15pt; }
-  li { margin-bottom: 1.5pt; }
-  .meta { color: var(--muted); font-size: 9pt; margin-bottom: 6pt; }
-  .draft { border: 1.5px solid var(--pend); color: var(--pend); padding: 5pt 8pt; border-radius: 4pt; font-size: 8.8pt; margin: 6pt 0 8pt; }
-  .pending { color: var(--pend); font-weight: 600; }
-  .ph { border: 1.5px dashed var(--pend); color: var(--pend); border-radius: 4pt; display: flex; align-items: center; justify-content: center; text-align: center; font-size: 8.5pt; padding: 6pt; background: #fffaf3; }
-  table { width: 100%; border-collapse: collapse; margin: 3pt 0 7pt; font-size: 8.7pt; break-inside: avoid; }
-  th, td { border: 1px solid var(--line); padding: 3pt 5pt; text-align: left; vertical-align: top; }
+  body { font-family: "Segoe UI", Inter, Arial, sans-serif; color: var(--ink); font-size: 9.4pt; line-height: 1.4; margin: 0; }
+  h1 { font-size: 18.5pt; margin: 0 0 2pt; letter-spacing: -0.01em; }
+  h1 .star { color: var(--gold); }
+  h2 { font-size: 11.3pt; margin: 10pt 0 4pt; color: var(--accent); border-bottom: 1px solid var(--line); padding-bottom: 2pt; break-after: avoid; }
+  h3 { font-size: 9.8pt; margin: 6pt 0 2pt; break-after: avoid; }
+  p { margin: 0 0 4.5pt; }
+  ul, ol { margin: 0 0 4.5pt; padding-left: 14pt; }
+  li { margin-bottom: 1.3pt; }
+  a { color: var(--accent); }
+  .meta { color: var(--muted); font-size: 8.8pt; margin-bottom: 6pt; }
+  table { width: 100%; border-collapse: collapse; margin: 3pt 0 6pt; font-size: 8.5pt; break-inside: avoid; }
+  th, td { border: 1px solid var(--line); padding: 2.6pt 4.5pt; text-align: left; vertical-align: top; }
   th { background: var(--soft); font-weight: 600; }
-  code { font-family: Consolas, "Cascadia Mono", monospace; font-size: 8.4pt; background: var(--soft); padding: 0 2pt; border-radius: 2pt; }
+  td.num { white-space: nowrap; }
+  code { font-family: Consolas, "Cascadia Mono", monospace; font-size: 8.2pt; background: var(--soft); padding: 0 2pt; border-radius: 2pt; }
   .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8pt; }
-  .grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6pt; }
-  figure { margin: 4pt 0 8pt; break-inside: avoid; }
-  figcaption { font-size: 8.3pt; color: var(--muted); margin-top: 2pt; }
+  .grid-fig { display: grid; grid-template-columns: 1.05fr 1fr; gap: 8pt; align-items: start; }
+  figure { margin: 3pt 0 6pt; break-inside: avoid; }
+  figure img { width: 100%; display: block; border-radius: 3pt; border: 1px solid var(--line); }
+  figcaption { font-size: 8pt; color: var(--muted); margin-top: 2pt; }
   svg text { font-family: "Segoe UI", Arial, sans-serif; }
-  .refs li { font-size: 8.3pt; }
-  .small { font-size: 8.4pt; color: var(--muted); }
+  .refs li { font-size: 8.1pt; }
+  .small { font-size: 8.2pt; color: var(--muted); }
+  .key { background: #fff8e6; border: 1px solid #f1d38a; border-radius: 4pt; padding: 5pt 8pt; margin: 4pt 0 6pt; font-size: 8.9pt; }
 </style>
 </head>
 <body>
 
-<h1>Namma Space: Smartphone Capture to Photorealistic Browser Walkthrough</h1>
-<div class="meta">Techfest IIT Bombay 2026–27 · Round 1: 3D Reconstruction &amp; Roaming · Team: <span class="pending">[TEAM NAME / ID]</span> · Live viewer: <span class="pending">[PUBLIC URL]</span> · Code: <span class="pending">[REPO URL]</span></div>
+<h1><span class="star">✦</span> StarDust: Smartphone Capture to a Photorealistic Browser Walkthrough</h1>
+<div class="meta">Team StarDust · Round 1: 3D Reconstruction &amp; Roaming · Live viewer: <a href="https://stardust-ns.vercel.app/">stardust-ns.vercel.app</a> · Code: <a href="https://github.com/positron-nb/starDust_NS">github.com/positron-nb/starDust_NS</a></div>
 
-<div class="draft"><b>DRAFT, NOT FINAL.</b> Orange items are placeholders for values that have not been measured yet, because the real-room capture has not been processed. Do not submit this version.</div>
+<div class="key"><b>Result:</b> one 3½-minute phone video of a real room was turned, with no manual modelling, into a 2.13-million-Gaussian 3D twin. The twin is published as a 42.9 MiB web page that loads in about 10 s and is explored in first person with WASD and the mouse. Rendered views at recovered camera poses match the original photos (Figure 3).</div>
 
 <h2>1. Problem and proposed solution</h2>
-<p>Static 2D floor plans do not convey what an indoor space looks or feels like, and building 3D models manually does not scale. Namma Space is an end-to-end, software-only pipeline. A non-expert records one walkthrough video of a room on a smartphone following a fixed SOP. The pipeline then reconstructs a photorealistic <b>3D Gaussian Splatting (3DGS)</b> digital twin with no manual modelling and publishes it as a zero-install web page. Visitors can roam it in first person with <b>WASD + mouse</b>, like a video game.</p>
-<p>Round 1 delivers capture, reconstruction and free roaming. The viewer is built on three.js, so Round 2 overlays (POIs, floor paths) attach to the same scene graph.</p>
+<p>A floor plan does not show what a space looks like, and manual 3D modelling does not scale. StarDust is a software-only pipeline:</p>
+<ul>
+  <li>A non-expert records <b>one walkthrough video</b> following a fixed capture SOP.</li>
+  <li>Automated scripts select good frames, recover camera poses (COLMAP), train a <b>3D Gaussian Splatting</b> model (nerfstudio Splatfacto), compress it, and derive metric scale and a walkable area from the camera path.</li>
+  <li>A zero-install web viewer (three.js + Spark) lets anyone roam the room like a video game.</li>
+</ul>
+<p>The viewer is a normal three.js scene, so Round 2 POIs and path overlays attach to the same scene graph.</p>
 
 <h2>2. System architecture</h2>
 <figure>
-<svg viewBox="0 0 760 210" width="100%" xmlns="http://www.w3.org/2000/svg">
+<svg viewBox="0 0 760 206" width="100%" xmlns="http://www.w3.org/2000/svg">
   <defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="#5a6272"/></marker></defs>
-  <g font-size="11">
-    <text x="8" y="14" font-weight="700" fill="#0e8f6a">CAPTURE (phone)</text>
-    <text x="180" y="14" font-weight="700" fill="#0e8f6a">PRE-PROCESS (CPU, local)</text>
-    <text x="420" y="14" font-weight="700" fill="#0e8f6a">RECONSTRUCT (GPU: Colab or local CUDA)</text>
-    <text x="8" y="132" font-weight="700" fill="#0e8f6a">PACKAGE</text>
-    <text x="320" y="132" font-weight="700" fill="#0e8f6a">DELIVER (static web, browser GPU)</text>
+  <g font-size="11" font-weight="700" fill="#4338ca">
+    <text x="8" y="14">CAPTURE (phone)</text><text x="180" y="14">PRE-PROCESS (CPU)</text><text x="420" y="14">RECONSTRUCT (GPU)</text>
+    <text x="8" y="130">PACKAGE + CALIBRATE</text><text x="320" y="130">DELIVER (static web)</text>
   </g>
   <g font-size="10" fill="#141821">
-    <rect x="8" y="24" width="150" height="74" rx="6" fill="#f3f6f8" stroke="#d9dde4"/>
-    <text x="16" y="42" font-weight="600">SOP video walkthrough</text><text x="16" y="57">1× lens, AE/AF lock, 4K30</text><text x="16" y="71">3-loop route, ~2–3 min</text><text x="16" y="85">capture_sop.md</text>
-    <rect x="180" y="24" width="210" height="74" rx="6" fill="#f3f6f8" stroke="#d9dde4"/>
-    <text x="188" y="42" font-weight="600">extract_frames.py → check_images.py</text><text x="188" y="57">2 fps, sharpest of 3 (Laplacian var.)</text><text x="188" y="71">reject blur/exposure/texture/duplicate</text><text x="188" y="85">≤1600 px JPEG + quality report</text>
-    <rect x="420" y="24" width="160" height="74" rx="6" fill="#f3f6f8" stroke="#d9dde4"/>
-    <text x="428" y="42" font-weight="600">COLMAP SfM</text><text x="428" y="57">ns-process-data images</text><text x="428" y="71">SIFT, sequential matching</text><text x="428" y="85">poses + sparse points</text>
-    <rect x="600" y="24" width="152" height="74" rx="6" fill="#f3f6f8" stroke="#d9dde4"/>
-    <text x="608" y="42" font-weight="600">Splatfacto (gsplat)</text><text x="608" y="57">ns-train splatfacto</text><text x="608" y="71">30k iters, ~6 GB VRAM</text><text x="608" y="85">init from SfM points</text>
-    <rect x="8" y="142" width="290" height="60" rx="6" fill="#f3f6f8" stroke="#d9dde4"/>
-    <text x="16" y="160" font-weight="600">ns-export gaussian-splat → splat-transform</text><text x="16" y="175">.ply → NaN filter → compressed .sog</text><text x="16" y="190">manifest.json: rotation, scale, floor, start, bounds</text>
-    <rect x="320" y="142" width="200" height="60" rx="6" fill="#f3f6f8" stroke="#d9dde4"/>
-    <text x="328" y="160" font-weight="600">Static host (Vercel)</text><text x="328" y="175">dist/: HTML + JS + .sog</text><text x="328" y="190">public link, no backend</text>
-    <rect x="540" y="142" width="212" height="60" rx="6" fill="#e9f7f2" stroke="#0e8f6a"/>
-    <text x="548" y="160" font-weight="600">Viewer: three.js + Spark 2.3.1</text><text x="548" y="175">WebGL2 splat rendering</text><text x="548" y="190">pointer-lock WASD, floor-height cam</text>
+    <rect x="8" y="22" width="150" height="76" rx="6" fill="#f3f4fa" stroke="#d9dde4"/>
+    <text x="16" y="40" font-weight="600">SOP video walkthrough</text><text x="16" y="55">1× lens, AE/AF lock, 60 fps</text><text x="16" y="69">3-loop route, ~3 min</text><text x="16" y="83">capture_sop.md</text>
+    <rect x="180" y="22" width="210" height="76" rx="6" fill="#f3f4fa" stroke="#d9dde4"/>
+    <text x="188" y="40" font-weight="600">extract_frames.py → check_images.py</text><text x="188" y="55">2 fps, sharpest of 3 (Laplacian var.)</text><text x="188" y="69">reject blur / exposure / texture / dup.</text><text x="188" y="83">fail-fast gate: ≥ 40 usable frames</text>
+    <rect x="420" y="22" width="160" height="76" rx="6" fill="#f3f4fa" stroke="#d9dde4"/>
+    <text x="428" y="40" font-weight="600">COLMAP SfM</text><text x="428" y="55">local CUDA: exhaustive</text><text x="428" y="69">or Colab CPU: sequential</text><text x="428" y="83">gate: registered ≥ 70 %</text>
+    <rect x="600" y="22" width="152" height="76" rx="6" fill="#f3f4fa" stroke="#d9dde4"/>
+    <text x="608" y="40" font-weight="600">Splatfacto (gsplat)</text><text x="608" y="55">30k iterations, Colab T4</text><text x="608" y="69">init from SfM points</text><text x="608" y="83">ns-export gaussian-splat</text>
+    <rect x="8" y="138" width="290" height="62" rx="6" fill="#f3f4fa" stroke="#d9dde4"/>
+    <text x="16" y="156" font-weight="600">splat-transform → SPZ / SOG (≈ 12× smaller)</text><text x="16" y="171">calibrate_from_poses.py: metric scale,</text><text x="16" y="186">floor, start pose, walk outline → manifest</text>
+    <rect x="320" y="138" width="200" height="62" rx="6" fill="#f3f4fa" stroke="#d9dde4"/>
+    <text x="328" y="156" font-weight="600">Vercel static hosting</text><text x="328" y="171">auto-deploy on git push</text><text x="328" y="186">public link, no backend</text>
+    <rect x="540" y="138" width="212" height="62" rx="6" fill="#eef0ff" stroke="#4338ca"/>
+    <text x="548" y="156" font-weight="600">Viewer: three.js + Spark 2.3.1</text><text x="548" y="171">WebGL2 splats, pointer-lock WASD</text><text x="548" y="186">eye-height camera, walk outline</text>
   </g>
   <g stroke="#5a6272" stroke-width="1.4" fill="none" marker-end="url(#a)">
-    <path d="M158 61H178"/><path d="M390 61H418"/><path d="M580 61H598"/>
-    <path d="M676 98V118H153V140"/><path d="M298 172H318"/><path d="M520 172H538"/>
+    <path d="M158 60H178"/><path d="M390 60H418"/><path d="M580 60H598"/>
+    <path d="M676 98V116H153V136"/><path d="M298 169H318"/><path d="M520 169H538"/>
   </g>
 </svg>
-<figcaption>Figure 1. Pipeline. Each stage is one command in <code>scripts/run_reconstruction.ps1</code> / <code>.sh</code>, which logs per-stage timings to <code>run_metrics.json</code>.</figcaption>
+<figcaption>Figure 1. Pipeline. Each stage is one command in <code>scripts/run_reconstruction.sh</code> / <code>.ps1</code>. Every run lives in its own folder, every native command is exit-checked, and timings and exact file sizes are written to <code>run_metrics.json</code>.</figcaption>
 </figure>
 
 <h2>3. Capture SOP and reconstruction methodology</h2>
 <div class="grid2">
 <div>
-<h3>3.1 Capture SOP (summary of <code>capture_sop.md</code>)</h3>
+<h3>3.1 Capture SOP (<code>capture_sop.md</code>)</h3>
 <ul>
-  <li><b>Space:</b> one furnished room, 10–30 m², even lighting. Remove moving objects and private items. Cover mirrors.</li>
-  <li><b>Phone:</b> main 1× lens only. Video at 4K30. AE/AF locked. No zoom and no "super-steady" mode, so the camera keeps one intrinsic model.</li>
-  <li><b>Motion:</b> about 0.3 m/s, always translating while turning (parallax for SfM), chest height, tilted 10–15° down, 1–3 m from surfaces.</li>
-  <li><b>Route:</b> entrance view, then an outer loop facing the centre with 3–5 s corner pauses, then an inner loop facing the walls, then furniture arcs at two heights, then back to the entrance (loop closure).</li>
-  <li><b>Failure prevention:</b> a table maps blur, reflections, textureless walls, moving objects and exposure drift to their symptoms and fixes.</li>
+  <li><b>Space:</b> one furnished room with even light. Remove moving objects and private items, and cover mirrors.</li>
+  <li><b>Phone:</b> main 1× lens only, AE/AF locked, no zoom and no "super-steady" mode, so the camera keeps one intrinsic model.</li>
+  <li><b>Motion:</b> about 0.3 m/s, always translating while turning (parallax), phone at chest height (≈ 1.3 m), 1–3 m from surfaces.</li>
+  <li><b>Route:</b> entrance view, outer loop facing the centre with corner pauses, inner loop facing the walls, furniture arcs, then back to the entrance for loop closure.</li>
+  <li><b>Failure table:</b> blur, reflections, textureless walls, movement and exposure drift are each mapped to a symptom and a fix.</li>
 </ul>
 </div>
 <div>
 <h3>3.2 Processing</h3>
 <ol>
-  <li><b>Frame selection:</b> decode at 6 fps and keep the frame with the highest variance of Laplacian in each group of 3. This gives 2 fps with even spacing and less motion blur.</li>
-  <li><b>Quality gate:</b> reject a frame if sharpness &lt; max(40, 0.35 × median), brightness falls outside 35–225, clipped pixels exceed 25 %, fewer than 15 % of 32-px blocks are textured, or its 16×16 dHash is within 6 bits of the last kept frame.</li>
-  <li><b>SfM:</b> COLMAP via <code>ns-process-data</code>, with sequential matching for video and exhaustive matching for photo sets. Accept the run if registered ÷ used ≥ 0.8.</li>
-  <li><b>3DGS training:</b> <code>ns-train splatfacto</code>, 30 k iterations, Gaussians initialised from SfM points.</li>
-  <li><b>Export and compression:</b> <code>ns-export gaussian-splat</code> → PLY, then <code>splat-transform --filter-nan</code> → SOG.</li>
-  <li><b>Alignment:</b> the viewer's <code>?calibrate</code> panel levels the floor (z-up → y-up), sets metric scale from a known dimension, and estimates floor height and walk bounds from 2nd/98th-percentile splat centres.</li>
+  <li><b>Frame selection:</b> decode at 6 fps and keep the sharpest frame (variance of Laplacian) in each group of 3, giving 2 fps.</li>
+  <li><b>Quality gate:</b> reject blur (&lt; max(40, 0.35 × median)), bad exposure, low texture and near-duplicates (dHash). The run stops if fewer than 40 frames remain.</li>
+  <li><b>SfM:</b> COLMAP SIFT. With a local CUDA GPU we use exhaustive matching; on Colab CPU, sequential matching. The run stops if fewer than 70 % of frames register.</li>
+  <li><b>3DGS:</b> <code>ns-train splatfacto</code>, 30k iterations, initialised from SfM points. Then <code>ns-export</code> and compression to SPZ.</li>
+  <li><b>Calibration:</b> COLMAP has no metric scale. We recompute nerfstudio's dataparser transform from the poses and set the scale so that the median camera height equals the SOP's 1.3 m. The camera-path hull (+ 0.3 m) becomes the walk outline.</li>
 </ol>
 </div>
 </div>
-
-<h3>3.3 Our contributions (beyond the open-source tools)</h3>
-<p>COLMAP, Splatfacto and Spark do the heavy lifting. What we built is the part that makes them usable by a non-expert and reproducible:</p>
-<ul>
-  <li>The <b>capture SOP</b> and its failure-mode table.</li>
-  <li><b>Sharpness-based frame selection</b> and a <b>fail-fast quality gate</b>.</li>
-  <li><b>Pipeline automation</b> with isolated run folders, a COLMAP registration gate, fresh-output checks and automatic metrics.</li>
-  <li><b>Offline calibration estimates</b> (floor, bounds, start pose) written to a validated draft manifest.</li>
-  <li>An in-browser <b>calibration tool</b> with a floor-outline editor.</li>
-  <li>The <b>first-person viewer integration</b> with robust loading and error handling.</li>
-</ul>
+<p class="small"><b>Our contributions</b> (beyond COLMAP, nerfstudio and Spark): the capture SOP; sharpness-based frame selection; fail-fast quality and registration gates; isolated, resumable pipeline runs with automatic metrics; pose-based metric calibration with photo-vs-render verification; a local-GPU COLMAP path; and the first-person viewer with walk outline, validation, local file opening and robust loading.</p>
 
 <h2>4. Technology choices</h2>
 <table>
-<tr><th style="width:17%">Layer</th><th style="width:22%">Choice</th><th>Justification (alternatives considered)</th></tr>
-<tr><td>Representation</td><td>3D Gaussian Splatting [1]</td><td>Photoreal, view-dependent appearance at real-time frame rates in WebGL. NeRF needs ray marching per pixel, which is too slow for the browser. Meshes (Meshroom) lose thin and glossy detail.</td></tr>
-<tr><td>Poses</td><td>COLMAP [2]</td><td>Reference incremental SfM, scriptable, and provides initial points. DUSt3R [4] is kept as a fallback for sparse or low-texture captures.</td></tr>
-<tr><td>Training</td><td>nerfstudio Splatfacto / gsplat [5,6]</td><td>One CLI for processing, training and export. About 6 GB of VRAM fits a free Colab T4. Apache-2.0, unlike the non-commercial original 3DGS code.</td></tr>
-<tr><td>Web renderer</td><td>Spark 2.3.1 + three.js 0.186</td><td>A splat mesh is a normal three.js object, so custom FPS controls and future POI and path overlays work. Loads PLY, SPZ and SOG. MIT licence.</td></tr>
-<tr><td>Compute</td><td>Hosted GPU (Colab) by default</td><td>The local RTX 5060 (Blackwell, sm_120) needs CUDA ≥ 12.8 and MSVC for the gsplat JIT build. Colab avoids losing the deadline to installation. A local path is documented as well.</td></tr>
+<tr><th style="width:15%">Layer</th><th style="width:21%">Choice</th><th>Why (alternatives considered)</th></tr>
+<tr><td>Representation</td><td>3D Gaussian Splatting [1]</td><td>Photoreal, view-dependent appearance at real-time rates in WebGL. NeRF ray marching is too slow for browsers, and meshes (Meshroom) lose thin and glossy detail.</td></tr>
+<tr><td>Poses</td><td>COLMAP [2]</td><td>Reference SfM. Scriptable, gives initial points, and its official CUDA build runs on a laptop GPU. DUSt3R [4] is kept as a fallback for very sparse captures.</td></tr>
+<tr><td>Training</td><td>Splatfacto / gsplat [5, 6]</td><td>One CLI for processing, training and export. About 6 GB of VRAM fits a free T4. Apache-2.0, whereas the original 3DGS code is non-commercial.</td></tr>
+<tr><td>Viewer</td><td>Spark 2.3.1 + three.js</td><td>Splats are ordinary three.js objects, so custom FPS controls and future overlays work. Loads PLY, SPZ and SOG. MIT licence.</td></tr>
+<tr><td>Delivery</td><td>SPZ on Vercel</td><td>11.8× smaller than the PLY and decodes on the CPU (SOG needs WebGPU, which Colab lacks). Static hosting with auto-deploy from git.</td></tr>
 </table>
 
-<h2>5. Reconstruction results <span class="pending">(PENDING)</span></h2>
-<div class="grid3">
-  <div class="ph" style="height:105pt">PENDING: entrance view of the real reconstructed room</div>
-  <div class="ph" style="height:105pt">PENDING: corner view showing wall and furniture detail</div>
-  <div class="ph" style="height:105pt">PENDING: close-up of a textured object plus a weak region (e.g. window)</div>
+<h2>5. Reconstruction results (real room, measured)</h2>
+<div class="grid-fig">
+<figure><img src="img/fig_hero.jpg" alt="Live viewer: reconstructed room, window wall"><figcaption>Figure 2. Live viewer at the start pose (deployed site). Window grille, the view outside, hanging cloth and desk items are reconstructed from the phone video.</figcaption></figure>
+<div>
+<table>
+<tr><th>Stage</th><th>Measured value</th></tr>
+<tr><td>Capture</td><td class="num">3:31 video, 2560×1440 at 60 fps</td></tr>
+<tr><td>Frames</td><td>1,269 candidates → 423 (sharpest of 3) → 345 pass gate (18.4 % rejected) → 328 used</td></tr>
+<tr><td>COLMAP (Colab CPU, sequential)</td><td>221/328 registered, 67,737 points, 0.54 px reprojection error, ≈ 83 min</td></tr>
+<tr><td>Training (Colab T4)</td><td>30k iterations, ≈ 60 min (+ ≈ 60 min one-time gsplat build)</td></tr>
+<tr><td>Model</td><td>2,133,204 Gaussians, SH degree 3; PLY 529.0 MB → SPZ <b>45.0 MB</b></td></tr>
+<tr><td>Calibration</td><td>1.949 m / unit; room ≈ 2.8 × 4.1 m</td></tr>
+<tr><td>Deployed load</td><td><b>10.0 s</b> cold (8.9 s download + 1.1 s decode)</td></tr>
+</table>
 </div>
-<p class="small">Figure 2. Screenshots will be taken from the deployed viewer and the real model only.</p>
+</div>
+<figure><img src="img/fig_compare.jpg" alt="Original phone frames next to live viewer renders from the same poses"><figcaption>Figure 3. Verification. Left: original phone frames. Right: the live viewer rendered from the camera poses recovered for those frames. Matching content and placement confirms the orientation, position and metric-scale calibration.</figcaption></figure>
+<p><b>Coverage finding.</b> The CPU run used sequential matching (each frame against its neighbours only), and 107 frames along one wall failed to register, so that wall is sparse in the published model. Re-running COLMAP on the laptop's RTX 5060 with exhaustive matching changed this:</p>
+<table>
+<tr><th>Same 328 frames</th><th>Colab CPU, sequential</th><th>Laptop GPU, exhaustive</th></tr>
+<tr><td>Registered frames</td><td>221 (67 %)</td><td><b>326 (99.4 %)</b></td></tr>
+<tr><td>3D points / reprojection error</td><td>67,737 / 0.54 px</td><td>101,083 / 0.57 px</td></tr>
+<tr><td>Extraction + matching + mapping</td><td>≈ 13 + 40 + 30 min</td><td><b>0.3 + 13 + 19.5 min</b></td></tr>
+</table>
+<p class="small">The improved poses are produced and verified to load in nerfstudio. A full training run on them was interrupted by the free Colab runtime disconnecting and is listed under future work, so the published model uses the 221-frame reconstruction.</p>
 
 <h2>6. Web viewer and interaction design</h2>
-<div class="grid2">
+<div class="grid-fig">
 <div>
 <ul>
-  <li><b>Start overlay</b> with a key legend. The Start button is enabled only once the model has decoded. The progress bar shows downloaded MB and percentage.</li>
-  <li><b>Movement:</b> pointer-lock mouse-look (pitch clamped to ±85°) and WASD/arrow keys at 1.4 m/s (Shift 2×). Exponential velocity smoothing gives fluid starts and stops. The camera is held at floor + eye height (1.6 m, Q/E ±0.6 m).</li>
-  <li><b>Navigation bound:</b> the camera stays inside a calibrated floor outline (point-in-polygon test with wall sliding), or a rectangle if no outline is set. This is explicitly <i>not</i> collision detection; splats have no surfaces.</li>
-  <li><b>Controls and robustness:</b> R reset, Esc pause and resume, an exit button, fullscreen, and a HUD (FPS, splats, size, load time, position). The manifest is validated field by field before loading. The download streams into a single preallocated buffer and has a stall timeout. Clear error cards cover an invalid or missing manifest or model, HTML 404 fallbacks, no WebGL2, and GPU context loss. Built for a desktop with keyboard and mouse; touch screens get drag-to-look and a notice.</li>
+  <li><b>Start card</b> with a control legend. The progress bar shows MB downloaded, and Start is enabled only after the model has decoded.</li>
+  <li><b>Movement:</b> pointer-lock mouse-look (pitch ±85°) and WASD at 1.4 m/s (Shift 2×) with smoothed acceleration. The camera stays at 1.6 m above the calibrated floor; Q/E adjust it by up to ±0.6 m.</li>
+  <li><b>Walk outline:</b> each step is tested as a segment against the outline polygon, with wall sliding. This is a navigation boundary, <i>not</i> collision: splats have no surfaces.</li>
+  <li><b>Robustness:</b> field-by-field manifest validation; a single preallocated download buffer with stall timeout; clear errors for missing files, HTML 404s, no WebGL2 and context loss; drag-to-look fallback.</li>
+  <li><b>Extras:</b> open or drop any local <code>.spz</code>/<code>.ply</code>/<code>.sog</code> to view it (it never leaves the browser); a <code>?calibrate</code> panel; a technical HUD (FPS, splats, size, load time).</li>
 </ul>
 </div>
-<div class="ph" style="height:150pt">PENDING: viewer screenshot on the deployed URL with the real model (overlay + walking view with HUD)</div>
+<figure><img src="img/fig_ui.jpg" alt="StarDust viewer start card"><figcaption>Figure 4. Viewer start card (StarDust theme) over the reconstructed room.</figcaption></figure>
 </div>
 
-<h2>7. Measured results and testing methodology</h2>
-<table>
-<tr><th>Metric (real room)</th><th>Value</th><th>Metric (real room)</th><th>Value</th></tr>
-<tr><td>Video duration / resolution</td><td class="pending">PENDING</td><td>Training time / GPU</td><td class="pending">PENDING</td></tr>
-<tr><td>Frames kept / rejected</td><td class="pending">PENDING</td><td>Splat count / PLY size</td><td class="pending">PENDING</td></tr>
-<tr><td>Registered cameras / used</td><td class="pending">PENDING</td><td>SOG size (web)</td><td class="pending">PENDING</td></tr>
-<tr><td>COLMAP time</td><td class="pending">PENDING</td><td>Load time / FPS (deployed)</td><td class="pending">PENDING</td></tr>
-</table>
-<p><b>Testing performed on test data (2026-10-27/29):</b></p>
+<h2>7. Testing methodology</h2>
 <ul>
-  <li><b>Automated tests</b> (<code>npm test</code>, also in GitHub Actions CI with the production build): 19 JS tests for manifest validation and an L-shaped walk outline, and 5 Python tests for frame extraction, the quality gate (pass, fail and zero usable frames) and splat statistics with the draft manifest.</li>
-  <li><b>Pipeline gates on Windows:</b> each gate and failure path stops the run with a clear message.</li>
-  <li><b>Synthetic room:</b> 79,102 splats in nerfstudio's z-up PLY layout, converted to a 155,108-byte SOG. The draft manifest recovered its floor (0.0 m) and bounds exactly.</li>
-  <li><b>Viewer:</b> holding W for 1.5 s moved the camera 2.11 m (expected about 2.1 m). Invalid or missing manifests and models showed the correct errors.</li>
+  <li><b>Automated</b> (<code>npm test</code>, run in GitHub Actions on every push):
+    <ul>
+      <li>23 JS tests: manifest validation; an L-shaped walk outline, including a regression for diagonal corner-cutting and a 60,000-step random-walk test; spawn projection.</li>
+      <li>5 Python tests: frame extraction; quality gate pass, fail and zero frames; splat statistics with the draft manifest.</li>
+      <li>CI also runs the production build, checks the built site contains its model, and smoke-tests the bash pipeline up to COLMAP.</li>
+    </ul>
+  </li>
+  <li><b>Pipeline:</b> every failure found during the real run is reproduced and fixed with a check: silent shell exit, missing CUDA in apt COLMAP, RAM exhaustion during the gsplat build, PyTorch 2.6 checkpoint loading, and missing WebGPU for SOG.</li>
+  <li><b>Model:</b> COLMAP statistics, renders at recovered poses compared with the photos (Figure 3), and load and console checks on the deployed URL from a fresh session.</li>
 </ul>
-<p><b>Planned on the real model:</b> cold-cache load time, peak memory and average and minimum FPS over a 60 s walk in incognito on two browsers, plus a pointer-lock, Esc and resume check.</p>
 
 <h2>8. Limitations, reproducibility and roadmap</h2>
 <div class="grid2">
 <div>
 <h3>Limitations</h3>
 <ul>
-  <li>No physical collision. You can walk through furniture; only the footprint bound applies.</li>
-  <li>COLMAP is scale-free, so metric scale is set manually from a known dimension.</li>
-  <li>Textureless walls, mirrors and windows can produce floaters or holes. The SOP mitigates this, but splats do not fully solve it.</li>
-  <li>Large models require compression and possibly external hosting.</li>
+  <li>One wall is sparse in the published model: 33 % of frames did not register with sequential CPU matching. The GPU exhaustive poses fix this (326/328) but still need training.</li>
+  <li>No physical collision: the camera can pass through furniture inside the outline.</li>
+  <li>Metric scale assumes the SOP's 1.3 m phone height (± a few cm).</li>
+  <li>Free Colab is slow (CPU COLMAP, a one-hour gsplat build) and can disconnect. A local CUDA toolchain removes both problems.</li>
 </ul>
 <h3>Reproducibility</h3>
-<p>Exact version pins (npm lockfile, nerfstudio 1.1.5), one script per platform plus a Colab notebook, metrics written automatically, and sample data with provenance in <code>test/</code>.</p>
+<p>Exact version pins, one script per platform plus a Colab notebook, per-run metrics, documented environment, and sample data in <code>test/</code>. A new room is swapped in through one manifest file.</p>
 </div>
 <div>
 <h3>Roadmap</h3>
 <ul>
-  <li><b>Round 2:</b> a floor occupancy grid from splat centres and COLMAP points (height slice), A* paths drawn as a floor ribbon, collision against the same grid, POIs stored in the manifest with click-to-label (raycast on the splat mesh) and search-to-jump.</li>
-  <li><b>Quality:</b> depth and normal priors (DN-Splatter) and line and plane cues (IndoorGS [3]) for flat indoor walls.</li>
-  <li><b>Scale:</b> multi-room capture with doorway linking passes and vocab-tree matching.</li>
-  <li><b>Round 3 bonus:</b> WebXR AR navigation, localising the phone against the SfM map.</li>
+  <li><b>Next:</b> train on the 326/328 GPU poses; cache the gsplat build; run the whole pipeline locally on the RTX 5060.</li>
+  <li><b>Round 2:</b> a floor occupancy grid from splats and SfM points, A* paths drawn as a floor ribbon, collision against that grid, and POIs with click-to-label and search-to-jump.</li>
+  <li><b>Quality:</b> depth and normal priors and line and plane cues (IndoorGS [3]) for flat indoor walls.</li>
+  <li><b>Scale and AR:</b> multi-room capture with doorway linking passes; WebXR navigation localised against the SfM map.</li>
 </ul>
 </div>
 </div>
@@ -194,7 +202,7 @@
   <li>V. Ye et al. gsplat: An Open-Source Library for Gaussian Splatting. JMLR 26, 2025.</li>
   <li>M. Tancik et al. Nerfstudio: A Modular Framework for Neural Radiance Field Development. SIGGRAPH 2023.</li>
 </ol>
-<p class="small"><b>Third-party software (used under licence, credited per rule 4):</b> COLMAP (BSD-3), nerfstudio 1.1.5 and gsplat 1.4.0 (Apache-2.0), Spark 2.3.1, three.js 0.186.1, splat-transform 3.10.1 and Vite 8.3.4 (MIT), FFmpeg via imageio-ffmpeg (LGPL/GPL binary, BSD-2 wrapper), NumPy and Pillow, and Inter and JetBrains Mono fonts (OFL). Full list in <code>references.md</code>.</p>
+<p class="small"><b>Third-party software, used under licence:</b> COLMAP 4.2.1 (BSD-3); nerfstudio 1.1.5 and gsplat 1.4.0 (Apache-2.0); Spark 2.3.1, three.js 0.186.1, splat-transform 3.10.1 and Vite 8.3.4 (MIT); FFmpeg via imageio-ffmpeg (LGPL/GPL binary, BSD-2 wrapper); NumPy and Pillow; Inter and JetBrains Mono fonts (OFL); Google Colab for GPU time; Vercel for hosting. Full list in <code>references.md</code>.</p>
 
 </body>
 </html>

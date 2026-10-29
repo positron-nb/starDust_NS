@@ -23,6 +23,15 @@ Rule: only numbers that were actually measured go here. Every value has a source
 | Viewer cold load from another network / browser, peak JS heap | PENDING | viewer HUD; DevTools Memory |
 | Viewer FPS: average and minimum over a 60 s walk, with browser, GPU and window resolution | PENDING | viewer HUD "FPS" (sampled every 0.5 s) |
 
+## A2. Local GPU COLMAP on the same 328 frames (measured 2026-10-29)
+
+| Metric | Colab CPU, sequential (published model) | Laptop RTX 5060, exhaustive (`scripts/colmap_gpu.ps1`, COLMAP 4.2.1 CUDA) |
+|---|---|---|
+| Registered frames | 221 / 328 (67 %) | **326 / 328 (99.4 %)** |
+| 3D points / mean reprojection error | 67,737 / 0.54 px | 101,083 / 0.57 px |
+| Feature extraction / matching / mapping | ≈ 13 / 40.3 / 29.5 min | 0.3 / 13.1 / 19.5 min |
+| Training on these poses | done (published) | converted by nerfstudio on Colab (326/328, `colmap_seconds` 19); training interrupted by a Colab disconnect at 36 %. Gaussian count stayed at ≈ 101k (no densification), so this needs investigation before a re-run |
+
 ## B. Pipeline and viewer verification on test data (measured 2026-10-27 and 2026-10-29)
 
 Machine: Windows 11, Ryzen 9 270, RTX 5060 Laptop 8 GB, Python 3.12.10, Node 24.19.0.

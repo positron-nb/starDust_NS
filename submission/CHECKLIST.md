@@ -10,17 +10,17 @@ Updated 2026-10-29.
 | 1 | Pre-processing scripts | ✅ | Automated tests in `test/py`. The quality gate fails hard below `--min-frames`. | |
 | 2 | Reconstruction pipeline | ✅ | Ran end to end on Colab T4 (run `room-20261029-1220`): frames → COLMAP 221/328 → Splatfacto 30k → export → SPZ. Fixes found during the run are pushed: CPU COLMAP fallback, gsplat `MAX_JOBS`, torch 2.6 load, SPZ fallback. | |
 | 2b | Local GPU COLMAP | ✅ | `scripts/colmap_gpu.ps1` on the RTX 5060 registers **326/328** frames in ~33 min. | |
-| 2c | Improved model from GPU COLMAP (`room-gpu-v1`) | 🟡 | Train on Colab with `--colmap-model`, then calibrate (`calibrate_from_poses.py`) and swap in if it covers more of the room. | You run Colab, I calibrate |
+| 2c | Improved model from GPU COLMAP (`room-gpu-v1`) | ⏸ deferred | Poses converted on Colab (326/328), but training was lost to a Colab disconnect and Gaussians were not densifying. Documented as future work; the submission uses the published model. | |
 | 3 | Web viewer | ✅ | WASD, pointer lock, loading, errors, reset, exit, resize, walk outline, local file open. Real pointer lock and FPS are still to be confirmed on a normal desktop browser. | **You**: open the link and walk around |
 | 4 | Real model loaded and calibrated | ✅ | 1.949 m/unit from camera height. Renders at recovered poses match the original photos. | |
 | 5 | Public deployment URL | ✅ | **https://stardust-ns.vercel.app/**. Public, no login. Cold load 10.0 s. Auto-deploys on every push to `main`. | |
-| 6 | Technical abstract PDF (≤ 5 pages) | 🟡 | Draft renders at 4 pages. Still needed: team name/ID, URLs, real screenshots, final metrics. | Me + your team name |
+| 6 | Technical abstract PDF (≤ 5 pages) | ✅ | `submission/technical_abstract.pdf`: 5 pages with real screenshots, photo-vs-render verification, measured metrics and the GPU COLMAP comparison. Add a team ID if the portal requires one. | |
 | 7 | Demo video (3–5 min) | 🟡 | `submission/demo_storyboard.md` has the shot list. Record the capture footage, Colab, the live URL and the walkthrough. | **You** record |
 | 8 | Code repository (public GitHub) | ✅ | https://github.com/positron-nb/starDust_NS. CI green. Teammates invited. | |
 | 9 | Sample data in `test/` | 🟡 | Synthetic fixture present. Add about 30 real frames with nothing private visible. | Me |
 | 10 | Additional links PDF | 🟡 | Viewer and repo links are filled. The demo video and Drive links are still missing. | Me after video |
 | 11 | Google Drive folder ("Anyone with the link can view") | ⛔ | Create the folder, upload items 6, 7 and 10 plus the code zip and outputs, set sharing, and test while logged out. | **You** |
-| 12 | Team name/ID in documents | ⛔ | Not known yet. | **You** |
+| 12 | Team name/ID in documents | ✅ | Team StarDust (add the Techfest team ID if required). | |
 | 13 | CI (GitHub Actions) | ✅ | Install, tests, build, dist check and a bash pipeline smoke test run on every push. | |
 
 ## Critical path (deadline 31 Oct)
