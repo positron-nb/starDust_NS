@@ -146,6 +146,11 @@ PY
 
 stage_train() {
   reset_dir "$OUTPUTS"
+  # gsplat JIT-compiles its CUDA kernels on first use; each nvcc job needs >1 GB RAM, and an
+  # unbounded parallel build exhausts Colab's ~13 GB and thrashes. Cap it unless set explicitly.
+  export MAX_JOBS="${MAX_JOBS:-2}"
+  # A build killed mid-way leaves torch's lock file behind, which makes the next build wait forever.
+  rm -f "$HOME"/.cache/torch_extensions/*/gsplat*/lock 2>/dev/null || true
   ns-train "$METHOD" --data "$PROCESSED" --output-dir "$OUTPUTS" --experiment-name "$RUN_ID" --timestamp run \
     --max-num-iterations "$MAX_ITERS" --viewer.quit-on-train-completion True
   mapfile -t configs < <(find "$OUTPUTS" -name config.yml)
