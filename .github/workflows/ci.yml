@@ -31,3 +31,13 @@ jobs:
           test -s "dist/$model"
       - name: Shell pipeline syntax
         run: bash -n scripts/run_reconstruction.sh
+      - name: Shell pipeline runs the frames stage and reaches COLMAP
+        run: |
+          ffmpeg_bin=$(python -c "import imageio_ffmpeg;print(imageio_ffmpeg.get_ffmpeg_exe())")
+          "$ffmpeg_bin" -loglevel error -f lavfi -i "testsrc2=size=1280x720:rate=30:duration=12" -pix_fmt yuv420p /tmp/t.mp4
+          set +e
+          bash scripts/run_reconstruction.sh --video /tmp/t.mp4 --runs-root /tmp/runs --run-id ci --min-frames 10 > /tmp/log.txt 2>&1
+          set -e
+          cat /tmp/log.txt
+          grep -q "== colmap (ci)" /tmp/log.txt   # frames stage passed; COLMAP is not installed in CI
+          python -c "import json;m=json.load(open('/tmp/runs/ci/run_metrics.json'));assert m['frames_used']>=10,m;print(m)"

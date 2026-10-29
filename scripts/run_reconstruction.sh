@@ -37,7 +37,7 @@ if [[ ! "$RUN_ID" =~ ^[A-Za-z0-9._-]+$ || "$RUN_ID" =~ ^\.+$ ]]; then
 fi
 
 STAGES=(frames colmap train export web)
-idx() { for i in "${!STAGES[@]}"; do [[ "${STAGES[$i]}" == "$1" ]] && echo "$i"; done; }
+idx() { for i in "${!STAGES[@]}"; do if [[ "${STAGES[$i]}" == "$1" ]]; then echo "$i"; fi; done; return 0; }
 START=$(idx "$SKIP_TO")
 [[ -n "$START" ]] || { echo "bad --skip-to: $SKIP_TO" >&2; exit 2; }
 
