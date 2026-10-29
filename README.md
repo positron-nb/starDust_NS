@@ -9,7 +9,7 @@ phone video ─► frame extraction + quality gate ─► COLMAP SfM poses ─�
             ─► ns-export gaussian-splat (.ply) ─► splat-transform (.sog, compressed) ─► Spark.js + Three.js viewer ─► static host
 ```
 
-> **Status (2026-10-29):** pipeline scripts, viewer, automated tests and docs are implemented and tested on generated and **synthetic** data. The real-room reconstruction has **not** been run yet because no capture file has been provided. Until then, the viewer's default manifest loads a clearly labelled synthetic room. See [`submission/CHECKLIST.md`](submission/CHECKLIST.md).
+> **Live viewer:** **https://stardust-ns.vercel.app/** shows a real room reconstructed from one smartphone video (2,133,204 Gaussians, 42.9 MiB, cold load ≈ 10 s). **Status (2026-10-29):** pipeline run end to end on Colab; a GPU-COLMAP re-run that registers 326/328 frames (vs 221) is in progress. Measured numbers: [`submission/metrics.md`](submission/metrics.md); open items: [`submission/CHECKLIST.md`](submission/CHECKLIST.md).
 
 ## Repository layout
 

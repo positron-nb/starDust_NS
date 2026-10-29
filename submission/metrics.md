@@ -19,7 +19,8 @@ Rule: only numbers that were actually measured go here. Every value has a source
 | Web model size and compression ratio | SPZ v3: 44,983,678 bytes (42.9 MiB), **11.8×** smaller than the PLY; conversion 31 s. (SOG failed on Colab: no WebGPU adapter.) | `run_metrics.json` |
 | Metric calibration | 1.949 m per model unit, from median camera height 0.667 units = 1.3 m (SOP chest height); footprint ≈ 2.8 × 4.1 m; walk outline = camera path hull + 0.3 m. **Verified**: renders from the recovered poses of frames 77 and 250 match the original photos. | `scripts/calibrate_from_poses.py` |
 | Viewer load on local dev server (not a deployment measurement) | 2,133,204 splats loaded in 1.2–2.7 s | viewer HUD |
-| Viewer cold load time (deployed, incognito, DevTools cache disabled) and peak JS heap | PENDING | viewer HUD "Load"; DevTools Performance/Memory |
+| Viewer cold load, deployed (https://stardust-ns.vercel.app, 2026-10-29, first visit from this laptop's connection) | **10.0 s** to ready: model download 8.87 s (44,984,127 bytes transferred over the network) + decode ≈ 1.1 s; no console errors | viewer HUD "Load"; Resource Timing API |
+| Viewer cold load from another network / browser, peak JS heap | PENDING | viewer HUD; DevTools Memory |
 | Viewer FPS: average and minimum over a 60 s walk, with browser, GPU and window resolution | PENDING | viewer HUD "FPS" (sampled every 0.5 s) |
 
 ## B. Pipeline and viewer verification on test data (measured 2026-10-27 and 2026-10-29)
