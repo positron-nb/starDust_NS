@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>StarDust · Room Walkthrough</title>
+    <title>Star Dust — Step inside</title>
     <meta name="description" content="Photorealistic first-person walkthrough of a real indoor room reconstructed from smartphone capture with 3D Gaussian Splatting." />
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230a0b1a'/%3E%3Cpath d='M16 3l3.4 8.1L28 12.3l-6.5 5.7 2 8.6L16 22l-7.5 4.6 2-8.6L4 12.3l8.6-1.2z' fill='%23ffd98a'/%3E%3C/svg%3E" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -11,25 +11,28 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="./style.css" />
   </head>
-  <body>
-    <canvas id="viewport" aria-label="3D walkthrough viewport"></canvas>
+  <body class="landing">
+    <canvas id="viewport" tabindex="0" aria-label="3D walkthrough viewport"></canvas>
 
     <header class="brand" aria-label="Model information">
       <div class="brand-mark" aria-hidden="true">
         <svg viewBox="0 0 32 32"><path d="M16 3l3.4 8.1L28 12.3l-6.5 5.7 2 8.6L16 22l-7.5 4.6 2-8.6L4 12.3l8.6-1.2z" /></svg>
       </div>
       <div>
-        <div class="brand-name">StarDust</div>
+        <div class="brand-name">Star Dust<span class="brand-tag">SPACES, REIMAGINED</span></div>
         <div class="brand-model"><span id="model-name">Loading…</span><span id="provenance" class="badge" hidden></span></div>
       </div>
     </header>
+    <div class="top-actions"><span class="live-label"><i></i> LIVE 3D EXPERIENCE</span><button id="btn-share" class="text-btn" type="button">Share space ↗</button><button id="btn-help" class="text-btn" type="button" aria-label="Open walkthrough help">?</button></div>
 
     <!-- Loading / start / paused overlay -->
-    <section id="overlay" class="overlay" role="dialog" aria-modal="true" aria-labelledby="overlay-title">
+    <section id="overlay" class="overlay" role="region" aria-labelledby="overlay-title">
       <div class="card">
-        <p class="eyebrow">✦ StarDust · 3D room walkthrough</p>
-        <h1 id="overlay-title">Walk through the room</h1>
-        <p id="overlay-sub" class="sub">Reconstructed from a smartphone capture. Rendered live in your browser, nothing to install.</p>
+        <div class="intro-copy">
+        <p class="eyebrow"><span></span> A REAL SPACE. A NEW WAY TO SEE IT.</p>
+        <h1 id="overlay-title">Some spaces<br/>deserve a <em>closer look.</em></h1>
+        <p id="overlay-sub" class="sub">An ordinary room, captured on a phone. Step into its digital twin and make yourself at home.</p>
+        <div class="experience-tags"><span>✦ Real-world capture</span><span>↗ No installation</span></div>
 
         <div id="loader" class="loader" aria-live="polite">
           <div class="bar"><div id="bar-fill" class="bar-fill"></div></div>
@@ -42,8 +45,9 @@
           <button id="retry" class="btn ghost" type="button">Retry</button>
         </div>
 
-        <p id="touch-note" class="touch-note" hidden>This walkthrough is built for a desktop or laptop with a keyboard and mouse. On a touch screen you can look around by dragging, but walking needs a keyboard.</p>
-        <button id="start" class="btn primary" type="button" disabled>Start walkthrough</button>
+        <p id="touch-note" class="touch-note" hidden>Drag to look around. Use the on-screen arrows to move through the room.</p>
+        <button id="start" class="btn primary" type="button" disabled>Step inside <span aria-hidden="true">↗</span></button>
+        <button id="btn-preview" class="preview-btn" type="button" disabled>Or explore the highlights <span aria-hidden="true">→</span></button>
 
         <ul class="keys" aria-label="Controls">
           <li><span class="kbd-group"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd></span>Move</li>
@@ -53,12 +57,21 @@
           <li><span class="kbd-group"><kbd>R</kbd></span>Reset to start point</li>
           <li><span class="kbd-group"><kbd class="wide">Esc</kbd></span>Release mouse / exit</li>
         </ul>
-        <p class="drop-hint">Have your own splat? Drop a <code>.spz</code>, <code>.ply</code> or <code>.sog</code> file anywhere on the page to view it. It stays on your computer.</p>
+        <p class="drop-hint">Made from a smartphone video. Best experienced with a keyboard &amp; mouse.</p>
+        </div>
+        <div class="intro-visual">
+          <div class="visual-caption"><span>THE ROOM COLLECTION</span><span>01 / 01</span></div>
+          <img id="hero-preview" src="/images/room2-view-0.jpg" alt="Room2 reconstructed window wall and workspace" />
+          <div class="visual-footer"><div><span class="eyebrow">CAPTURED, NOT MODELLED</span><h2>A familiar place.<br/>An unfamiliar perspective.</h2></div><span class="visual-star" aria-hidden="true">✦</span></div>
+          <div class="visual-note"><span><i></i> 3D Gaussian Splatting</span><span>Room 02 · Indoor</span></div>
+        </div>
       </div>
+      <footer class="intro-footer"><span>BUILT BY STAR DUST</span><span>NAMMA SPACE · TECHFEST IIT BOMBAY 2026–27</span><a href="https://github.com/positron-nb/starDust_NS" target="_blank" rel="noreferrer">Behind the scenes ↗</a></footer>
     </section>
 
     <!-- Floating controls -->
     <nav class="dock" aria-label="Viewer controls">
+      <button id="btn-views" class="icon-btn" type="button" title="Explore saved views" aria-label="Explore saved views" disabled><svg viewBox="0 0 24 24"><path d="M3 5h18v14H3zM3 14l5-5 5 6 3-3 5 5"/><circle cx="16" cy="9" r="1"/></svg></button>
       <button id="btn-open" class="icon-btn" type="button" title="Open a model file from your computer (or drop it on the page)" aria-label="Open model file">
         <svg viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /><path d="M12 10v6M9 13l3-3 3 3" /></svg>
       </button>
@@ -69,7 +82,7 @@
       <button id="btn-fullscreen" class="icon-btn" type="button" title="Fullscreen (F)" aria-label="Toggle fullscreen">
         <svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" /></svg>
       </button>
-      <button id="btn-hud" class="icon-btn" type="button" title="Technical stats (I)" aria-label="Toggle technical stats" aria-pressed="true">
+      <button id="btn-hud" class="icon-btn" type="button" title="Technical stats (I)" aria-label="Toggle technical stats" aria-pressed="false">
         <svg viewBox="0 0 24 24"><path d="M4 19V11M10 19V5M16 19v-6M22 19H2" /></svg>
       </button>
       <button id="btn-exit" class="icon-btn danger" type="button" title="Exit walkthrough (Esc)" aria-label="Exit walkthrough">
@@ -77,7 +90,7 @@
       </button>
     </nav>
 
-    <aside id="hud" class="hud mono" aria-label="Technical status">
+    <aside id="hud" class="hud mono" aria-label="Technical status" hidden>
       <div><span>FPS</span><b id="hud-fps">–</b></div>
       <div><span>Splats</span><b id="hud-splats">–</b></div>
       <div><span>Model</span><b id="hud-size">–</b></div>
@@ -85,6 +98,17 @@
       <div><span>Pos</span><b id="hud-pos">–</b></div>
       <div><span>Mode</span><b id="hud-mode">idle</b></div>
     </aside>
+
+    <section id="scene-browser" class="scene-browser" aria-label="Saved room viewpoints" hidden>
+      <div class="scene-heading"><div><span class="eyebrow">A CHANGE OF PERSPECTIVE</span><h2>Take a closer look.</h2></div><button id="btn-tour" type="button" class="text-btn" aria-pressed="false">▷ Play highlights</button></div>
+      <div id="view-list" class="view-list"></div>
+      <p class="scene-note">Saved camera views · Select a view or step inside to roam freely.</p>
+    </section>
+    <aside id="room-map" class="room-map" hidden aria-label="Room walk boundary and camera position"><div class="map-heading"><span>ROOM OUTLINE</span><span id="map-heading">N ↑</span></div><svg id="map-svg" viewBox="0 0 160 110" role="img" aria-label="Walk boundary with your current position"><path id="map-area"/><g id="map-camera"><path d="M0 -12 L-7 6 L0 3 L7 6Z"/></g></svg><span class="map-legend"><i></i> You are here</span></aside>
+    <div id="walk-hint" class="walk-hint" hidden><kbd>W A S D</kbd> Move <span>·</span> Mouse to look <span>·</span> <kbd>Esc</kbd> Pause</div>
+    <div id="view-caption" class="view-caption" hidden><span class="eyebrow">YOU'RE EXPLORING</span><h2 id="view-title"></h2><p id="view-description"></p><button id="btn-roam" class="btn primary" type="button">Walk from here ↗</button></div>
+    <div id="touch-move" class="touch-move" hidden aria-label="Touch movement controls"><button data-move="KeyW" aria-label="Move forward">↑</button><button data-move="KeyA" aria-label="Move left">←</button><button data-move="KeyS" aria-label="Move backward">↓</button><button data-move="KeyD" aria-label="Move right">→</button></div>
+    <dialog id="help-dialog" class="help-dialog" aria-labelledby="help-title"><div class="help-heading"><span class="eyebrow">MAKE YOURSELF AT HOME</span><button id="help-close" class="text-btn" aria-label="Close help">✕</button></div><h2 id="help-title">Your space to explore.</h2><p>Click <b>Step inside</b> to walk freely. Your mouse controls where you look; press Esc to pause.</p><dl><dt>W A S D / arrows</dt><dd>Move around</dd><dt>Shift</dt><dd>Walk faster</dd><dt>Q / E</dt><dd>Lower / raise eye level</dd><dt>R · F · I</dt><dd>Reset · fullscreen · stats</dd><dt>On a phone</dt><dd>Drag to look, arrows to move</dd></dl><p class="help-note">Highlights jump between saved viewpoints. The outline is a movement boundary; furniture does not block movement.</p><p class="help-note">Your own model? Use the folder button or drop a .spz, .ply or .sog file. Files stay on your device.</p><label class="quality-label" for="quality">Display quality<select id="quality"><option value="1">Performance</option><option value="1.5" selected>Balanced</option><option value="2">High detail</option></select></label></dialog>
 
     <div id="crosshair" class="crosshair" aria-hidden="true"></div>
     <div id="toast" class="toast" role="status" aria-live="polite"></div>

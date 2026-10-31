@@ -1,61 +1,25 @@
-<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<title>StarDust: Additional Links and Prototypes (Round 1)</title>
-<style>
-  @page { size: A4; margin: 18mm; }
-  body { font-family: "Segoe UI", Inter, Arial, sans-serif; color: #141821; font-size: 10.5pt; line-height: 1.45; }
-  h1 { font-size: 20pt; margin: 0 0 4pt; }
-  h2 { font-size: 12pt; color: #0e8f6a; border-bottom: 1px solid #d9dde4; padding-bottom: 2pt; margin: 16pt 0 6pt; }
-  .meta { color: #5a6272; margin-bottom: 10pt; }
-  table { width: 100%; border-collapse: collapse; }
-  th, td { border: 1px solid #d9dde4; padding: 6pt 8pt; text-align: left; vertical-align: top; }
-  th { background: #f3f6f8; width: 30%; }
-  a { color: #0b6e52; word-break: break-all; }
-  .pending { color: #b35c00; font-weight: 600; }
-  .draft { border: 1.5px solid #b35c00; color: #b35c00; padding: 6pt 9pt; border-radius: 4pt; }
-  ol li { margin-bottom: 3pt; }
-</style>
-</head>
-<body>
-<h1>✦ StarDust: Additional Links &amp; Prototypes</h1>
-<div class="meta">Techfest IIT Bombay 2026–27 · Round 1: 3D Reconstruction &amp; Roaming · Team StarDust</div>
-<p class="draft"><b>TEMPLATE:</b> replace every orange item with a real, tested link. Each link must open in a logged-out or incognito browser.</p>
+<!doctype html><html><head><meta charset="utf-8"><title>Star Dust - Links and Prototype</title><style>
+@page {size:A4;margin:14mm;} *{box-sizing:border-box;} body{font-family:"Segoe UI",Arial,sans-serif;font-size:10pt;line-height:1.45;color:#17243a;margin:0;} h1{font-size:21pt;line-height:1.2;margin:0 0 5px;} .subtitle{font-size:9pt;color:#60708a;margin:0 0 18px;} h2{font-size:12pt;color:#4338ca;border-bottom:1px solid #dbe1ed;padding-bottom:5px;margin:19px 0 7px;} p{margin:0 0 8px;} a{color:#4338ca;overflow-wrap:anywhere;} .url{background:#f1f4fa;border-left:3px solid #bea05c;padding:9px 12px;border-radius:3px;margin-bottom:9px;font-size:9.5pt;} .note{font-size:9pt;color:#506078;} code{font-size:9pt;}
 
-<h2>1. Live web viewer (free-roaming proof of concept)</h2>
-<table>
-  <tr><th>Public URL</th><td><a href="https://stardust-ns.vercel.app/">https://stardust-ns.vercel.app/</a></td></tr>
-  <tr><th>How to use</th><td>Open in a desktop browser (Chrome, Edge or Firefox) and wait for the progress bar. Click <b>Start walkthrough</b>. <b>W A S D</b> to walk, <b>mouse</b> to look, <b>Shift</b> to walk faster, <b>Q/E</b> to change eye level, <b>R</b> to reset, <b>Esc</b> to release the mouse. No installation or login is needed.</td></tr>
-  <tr><th>Scene</th><td>A team member's room (about 2.8 × 4.1 m), reconstructed from 221 registered smartphone frames (of 328); 2,133,204 Gaussians, 42.9 MiB download.</td></tr>
-</table>
-
-<h2>2. Demonstration video (3–5 min)</h2>
-<table>
-  <tr><th>Google Drive</th><td><span class="pending">[Drive link to demo.mp4]</span></td></tr>
-  <tr><th>Mirror (optional)</th><td><span class="pending">[YouTube unlisted link]</span></td></tr>
-</table>
-
-<h2>3. Code repository</h2>
-<table>
-  <tr><th>GitHub</th><td><a href="https://github.com/positron-nb/starDust_NS">https://github.com/positron-nb/starDust_NS</a> (branch <code>main</code>)</td></tr>
-  <tr><th>Setup and reconstruction</th><td><code>README.md</code> sections 1–3; <code>capture_sop.md</code>; <code>scripts/run_reconstruction.ps1</code>; <code>notebooks/namma_space_colab.ipynb</code></td></tr>
-  <tr><th>Sample data (test directory)</th><td><code>test/sample_data/</code>, described in <code>test/README.md</code></td></tr>
-</table>
-
-<h2>4. Documents in this Drive folder</h2>
-<ol>
-  <li><b>Technical_Abstract.pdf</b>: system architecture, SOP, methodology, results (≤ 5 pages)</li>
-  <li><b>Demo_Video.mp4</b>: capture, processing, model and live walkthrough</li>
-  <li><b>Additional_Links_and_Prototypes.pdf</b>: this document</li>
-  <li><b>Code/</b>: zipped snapshot of the repository at submission time, including test data</li>
-  <li><b>Reconstruction_Outputs/</b>: <code>run_metrics.json</code>, quality reports, COLMAP <code>transforms.json</code>, exported <code>splat.ply</code></li>
-</ol>
-
-<h2>5. Link verification log</h2>
-<table>
-  <tr><th>Checked on</th><td><span class="pending">[date, time]</span> in an incognito window, logged out</td></tr>
-  <tr><th>Result</th><td><span class="pending">[all links open / issues]</span></td></tr>
-</table>
-</body>
-</html>
+.team-card { background:#111c35; color:#ffffff; border-radius:10px; padding:15px 18px; margin:0 0 15px; break-inside:avoid; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+.team-top { display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #43506a; padding-bottom:10px; margin-bottom:10px; }
+.team-name { font-size:23pt; font-weight:700; letter-spacing:.02em; line-height:1.1; }
+.team-kicker { color:#c2cce2; font-size:7pt; letter-spacing:.12em; margin-bottom:4px; }
+.team-id { color:#ffe4a3; background:#28334a; border:1px solid #7b6741; padding:7px 10px; border-radius:6px; font-size:9pt; font-weight:600; }
+.team-people { display:grid; grid-template-columns:1fr 1fr; gap:9px 18px; }
+.team-person { font-size:9pt; line-height:1.3; }
+.team-role { color:#eac16a; font-size:6.8pt; letter-spacing:.07em; }
+.team-mail { font-size:8pt; color:#c8d4ec; text-decoration:none; }
+</style></head><body><div class="team-card"><div class="team-top"><div><div class="team-kicker">NAMMA SPACE / TECHFEST 2026-27</div><div class="team-name">Star Dust</div></div><div class="team-id">TEAM ID &nbsp; TM-AFF7A2B2207</div></div><div class="team-people"><div class="team-person"><div class="team-role">TEAM LEADER</div><b>Abhishek Kumar Singh</b><br/><a class="team-mail" href="mailto:abhishekkrsingh2345@gmail.com">abhishekkrsingh2345@gmail.com</a></div><div class="team-person"><div class="team-role">TEAM MEMBER</div><b>Abhinav Rai</b><br/><a class="team-mail" href="mailto:abhinav.rai017@gmail.com">abhinav.rai017@gmail.com</a></div><div class="team-person"><div class="team-role">TEAM MEMBER</div><b>Gaurav Singh Rajpoot</b><br/><a class="team-mail" href="mailto:rajpootgauravsingh64@gmail.com">rajpootgauravsingh64@gmail.com</a></div><div class="team-person"><div class="team-role">TEAM MEMBER</div><b>Naman Singh</b><br/><a class="team-mail" href="mailto:inamansingh2401@gmail.com">inamansingh2401@gmail.com</a></div></div></div>
+<h1>Links &amp; Prototype</h1><p class="subtitle">Round 1: 3D Reconstruction &amp; Roaming</p>
+<h2>01 &nbsp; Live web viewer</h2>
+<div class="url"><a href="https://stardust-ns.vercel.app/">https://stardust-ns.vercel.app/</a></div>
+<p>Open on a desktop or laptop browser. Wait for loading, then click <b>Start walkthrough</b>. Use <b>WASD</b> or arrow keys to walk, the <b>mouse</b> to look, <b>Shift</b> to move faster, <b>Q/E</b> to adjust eye height, <b>R</b> to reset and <b>Esc</b> to release the mouse.</p>
+<h2>02 &nbsp; Code repository &amp; reconstruction setup</h2>
+<div class="url"><a href="https://github.com/positron-nb/starDust_NS">https://github.com/positron-nb/starDust_NS</a></div>
+<p>Branch: <b>main</b>. <code>README.md</code> contains viewer setup and reconstruction instructions; <code>capture_sop.md</code> describes data collection. The notebook <code>notebooks/namma_space_colab.ipynb</code> runs the reconstruction pipeline on a hosted GPU.</p>
+<p class="note">Sample data: <code>test/sample_data/</code>. Usage: <code>test/README.md</code>.</p>
+<h2>03 &nbsp; Submission folder</h2>
+<div class="url"><a href="https://drive.google.com/drive/folders/17erIqZJBRfdBJkza_zMT-XNjzyQLLuHW">Open the Round 1 Google Drive folder</a></div>
+<p class="note">Technical abstract: <b>01_Technical_Abstract.pdf</b> - system architecture, capture SOP, reconstruction methodology and results.</p>
+</body></html>

@@ -4,11 +4,12 @@
 import * as THREE from "three";
 import { SparkRenderer, SplatMesh } from "@sparkjsdev/spark";
 import { DEFAULTS, constrainMove, nearestInside, percentileSorted, validateManifest } from "./manifest.js";
+import { ROOM2_VIEWS } from "./viewpoints.js";
 
 const params = new URLSearchParams(location.search);
 const CALIBRATE = params.has("calibrate");
 const MANIFEST_URL = params.get("manifest") || "models/manifest.json";
-const MAX_DPR = Number(params.get("dpr")) || 1.5;
+let maxDpr = THREE.MathUtils.clamp(Number(params.get("dpr")) || 1.5, 0.5, 2);
 
 const LOOK_SENSITIVITY = 0.0022; // radians per pixel
 const PITCH_LIMIT = THREE.MathUtils.degToRad(85);
@@ -16,6 +17,7 @@ const EYE_OFFSET_RANGE = [-0.8, 0.6];
 const STALL_TIMEOUT_MS = 30000; // abort a download that receives no bytes for this long
 const STATS_MAX_SAMPLES = 200000; // splat centres sampled for floor/bounds estimates
 const TOUCH_ONLY = matchMedia("(pointer: coarse)").matches && !matchMedia("(any-pointer: fine)").matches;
+document.body.classList.toggle("touch-device", TOUCH_ONLY);
 
 // ---------- DOM ----------
 const $ = (id) => document.getElementById(id);
@@ -46,6 +48,10 @@ const state = {
   dragging: false,
   download: null, // AbortController of the in-flight model download
 };
+let activeView = -1;
+let highlightsTimer = null;
+let mapProject = null;
+const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)");
 
 // ---------- Renderer ----------
 if (!hasWebGL2()) {
@@ -54,7 +60,7 @@ if (!hasWebGL2()) {
 }
 
 const renderer = new THREE.WebGLRenderer({ canvas: ui.canvas, antialias: false, powerPreference: "high-performance" });
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, MAX_DPR));
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, maxDpr));
 renderer.setSize(window.innerWidth, window.innerHeight, false);
 
 const scene = new THREE.Scene();
@@ -117,13 +123,13 @@ async function boot() {
 
 function showModelInfo() {
   const m = state.manifest;
-  ui.modelName.textContent = m.name;
+  ui.modelName.textContent = m.provenance === "reconstruction" && m.file === "models/room2.spz" ? "Room 02 · A captured space" : m.name;
   ui.provenance.hidden = false;
   const label = { reconstruction: "Real capture", synthetic: "Synthetic test scene", local: "Local file" };
   ui.provenance.textContent = label[m.provenance] ?? m.provenance;
   ui.provenance.className = `badge ${m.provenance === "reconstruction" ? "real" : "synthetic"}`;
   ui.sub.textContent = m.provenance === "reconstruction"
-    ? "Reconstructed from a smartphone capture. Rendered live in your browser, nothing to install."
+    ? "An ordinary room, captured on a phone. Step into its digital twin and make yourself at home."
     : m.provenance === "local"
       ? "Opened from your computer: nothing is uploaded. Alignment is estimated automatically from the splats."
       : "Procedurally generated test scene used to verify the viewer. It is not a reconstruction of a real room.";
@@ -160,6 +166,7 @@ function finishLoad() {
   ui.error.hidden = true;
   ui.start.disabled = false;
   setMode("ready");
+  configureExperience();
   ui.start.focus({ preventScroll: true });
   if (CALIBRATE) initCalibration();
 }
@@ -384,6 +391,11 @@ function eyeY() {
 }
 
 function resetCamera() {
+  stopHighlights();
+  activeView = -1;
+  updateViewButtons();
+  camera.fov = 60;
+  camera.updateProjectionMatrix();
   const { start } = state.manifest;
   state.eyeOffset = 0;
   state.velocity.set(0, 0, 0);
@@ -393,6 +405,7 @@ function resetCamera() {
   const [x, z] = nearestInside(start.position, state.area);
   camera.position.set(x, eyeY(), z);
   applyLook();
+  if (state.mode === "inspect") setMode("ready");
 }
 
 function applyLook() {
@@ -404,24 +417,46 @@ function setMode(mode) {
   state.mode = mode;
   ui.mode.textContent = state.fly ? `${mode} · fly` : mode;
   document.body.classList.toggle("walking", mode === "walk" || mode === "drag");
+  const walking = mode === "walk" || mode === "drag";
+  $("walk-hint").hidden = !walking;
+  $("touch-move").hidden = !walking || !TOUCH_ONLY;
+  $("view-caption").hidden = mode !== "inspect";
+  $("scene-browser").hidden = !hasRoomViews() || mode !== "inspect";
+  $("room-map").hidden = !state.loaded || (mode !== "inspect" && !walking);
+  document.body.dataset.mode = mode;
 }
 
 function showOverlay(paused = false) {
+  stopHighlights();
+  document.body.classList.add("landing");
+  ui.overlay.inert = false;
   ui.overlay.classList.remove("hidden");
   ui.overlay.removeAttribute("aria-hidden");
   if (state.loaded) {
-    ui.title.textContent = paused ? "Paused" : "Walk through the room";
-    ui.start.textContent = paused ? "Resume walkthrough" : "Start walkthrough";
+    ui.title.textContent = paused ? "Take your time. The room can wait." : "Some spaces deserve a closer look.";
+    ui.start.textContent = paused ? "Continue exploring ↗" : "Step inside ↗";
+    ui.start.focus({ preventScroll: true });
   }
 }
 
 function hideOverlay() {
+  document.body.classList.remove("landing");
+  ui.overlay.inert = true;
   ui.overlay.classList.add("hidden");
   ui.overlay.setAttribute("aria-hidden", "true");
 }
 
 function startWalk() {
   if (!state.loaded) return;
+  stopHighlights();
+  const [x, z] = nearestInside([camera.position.x, camera.position.z], state.area);
+  camera.position.x = x;
+  camera.position.z = z;
+  state.eyeOffset = THREE.MathUtils.clamp(camera.position.y - state.manifest.floorY - state.manifest.eyeHeight, ...EYE_OFFSET_RANGE);
+  camera.position.y = eyeY();
+  camera.fov = 60;
+  camera.updateProjectionMatrix();
+  $("help-dialog").close();
   if (TOUCH_ONLY) return enterDragMode();
   hideOverlay();
   ui.canvas.focus({ preventScroll: true });
@@ -440,7 +475,7 @@ function enterDragMode() {
   if (document.pointerLockElement) return;
   setMode("drag");
   hideOverlay();
-  toast("Pointer lock unavailable: drag with the mouse to look");
+  if (!TOUCH_ONLY) toast("Drag to look · WASD to move");
 }
 
 function exitWalk(paused = false) {
@@ -468,7 +503,7 @@ document.addEventListener("pointerlockerror", () => {
 const MOVE_KEYS = new Set(["KeyW", "KeyA", "KeyS", "KeyD", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "KeyQ", "KeyE", "ShiftLeft", "ShiftRight", "Space", "KeyC"]);
 
 window.addEventListener("keydown", (e) => {
-  if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+  if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement || e.target instanceof HTMLSelectElement || $("help-dialog").open) return;
   const active = state.mode === "walk" || state.mode === "drag";
   if (MOVE_KEYS.has(e.code) && active) {
     state.keys.add(e.code);
@@ -479,8 +514,8 @@ window.addEventListener("keydown", (e) => {
     case "KeyR": if (state.loaded) { resetCamera(); toast("Camera reset to start point"); } break;
     case "KeyF": toggleFullscreen(); break;
     case "KeyI": toggleHud(); break;
-    case "Escape": if (state.mode === "drag") exitWalk(true); break;
-    case "Enter": if (state.mode === "ready" && document.activeElement !== ui.start) startWalk(); break;
+    case "Escape": if (state.mode === "drag" || state.mode === "walk") exitWalk(true); break;
+    case "Enter": if (state.mode === "ready" && e.target === document.body) startWalk(); break;
   }
 });
 window.addEventListener("keyup", (e) => state.keys.delete(e.code));
@@ -538,7 +573,7 @@ function toast(msg) {
 // ---------- Resize ----------
 function onResize() {
   const w = window.innerWidth, h = Math.max(1, window.innerHeight);
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, MAX_DPR));
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, maxDpr));
   renderer.setSize(w, h, false);
   camera.aspect = w / h;
   camera.updateProjectionMatrix();
@@ -606,6 +641,7 @@ renderer.setAnimationLoop((now) => {
     hudTime = 0;
     const p = camera.position;
     ui.pos.textContent = `${p.x.toFixed(2)}, ${p.z.toFixed(2)} @ ${p.y.toFixed(2)}`;
+    updateRoomMap();
   }
 });
 
@@ -712,5 +748,143 @@ function manifestForExport() {
 }
 function manifestJson() { return JSON.stringify(manifestForExport(), null, 2); }
 function renderJson() { $("c-json").textContent = manifestJson(); }
+
+// ---------- Curated room views & experience controls ----------
+function hasRoomViews() {
+  return !CALIBRATE && state.manifest.provenance === "reconstruction" && state.manifest.file === "models/room2.spz";
+}
+
+function configureExperience() {
+  const available = hasRoomViews();
+  $("btn-preview").disabled = !available;
+  $("btn-views").disabled = !available;
+  $("btn-preview").hidden = !available;
+  document.querySelector(".intro-visual").hidden = !available;
+  document.querySelector(".card").classList.toggle("single", !available);
+  document.querySelector(".experience-tags span").textContent = state.manifest.provenance === "reconstruction" ? "✦ Real-world capture" : state.manifest.provenance === "local" ? "✦ Your own model" : "✦ Synthetic test scene";
+  const list = $("view-list");
+  list.replaceChildren();
+  if (available) {
+    ROOM2_VIEWS.forEach((view, index) => {
+      const button = document.createElement("button");
+      button.className = "view-card";
+      button.type = "button";
+      button.setAttribute("aria-pressed", "false");
+      const image = document.createElement("img");
+      image.src = view.image;
+      image.alt = "";
+      const title = document.createElement("span");
+      title.textContent = `${String(index + 1).padStart(2, "0")}  ${view.title}`;
+      button.append(image, title);
+      button.addEventListener("click", () => { stopHighlights(); selectView(index); });
+      list.append(button);
+    });
+    const requested = Number(params.get("view"));
+    applyView(Number.isInteger(requested) && requested >= 0 && requested < ROOM2_VIEWS.length ? requested : 0);
+  }
+  setupRoomMap();
+}
+
+function applyView(index) {
+  if (!hasRoomViews()) return;
+  const view = ROOM2_VIEWS[index];
+  if (!view) return;
+  activeView = index;
+  state.velocity.set(0, 0, 0);
+  state.keys.clear();
+  camera.position.fromArray(view.position);
+  camera.quaternion.setFromRotationMatrix(new THREE.Matrix4().fromArray(view.matrix));
+  state.yaw = camera.rotation.y;
+  state.pitch = camera.rotation.x;
+  state.eyeOffset = camera.position.y - state.manifest.floorY - state.manifest.eyeHeight;
+  camera.fov = view.fov;
+  camera.updateProjectionMatrix();
+  $("view-title").textContent = view.title;
+  $("view-description").textContent = view.description;
+  updateViewButtons();
+}
+
+function updateViewButtons() {
+  [...$("view-list").children].forEach((button, index) => button.setAttribute("aria-pressed", String(index === activeView)));
+}
+
+function selectView(index) {
+  if (!state.loaded || !hasRoomViews()) return;
+  setMode("inspect");
+  if (document.pointerLockElement) document.exitPointerLock();
+  state.dragging = false;
+  hideOverlay();
+  applyView(index);
+  if (!reducedMotion.matches) ui.canvas.animate([{ opacity: 0.35 }, { opacity: 1 }], { duration: 450 });
+}
+
+function stopHighlights() {
+  clearInterval(highlightsTimer);
+  highlightsTimer = null;
+  $("btn-tour").textContent = "▷ Play highlights";
+  $("btn-tour").setAttribute("aria-pressed", "false");
+}
+
+$("btn-tour").addEventListener("click", () => {
+  if (highlightsTimer) return stopHighlights();
+  $("btn-tour").textContent = "Ⅱ Pause highlights";
+  $("btn-tour").setAttribute("aria-pressed", "true");
+  highlightsTimer = setInterval(() => selectView((activeView + 1) % ROOM2_VIEWS.length), 6500);
+});
+document.addEventListener("visibilitychange", () => { if (document.hidden) stopHighlights(); });
+$("btn-preview").addEventListener("click", () => selectView(Math.max(0, activeView)));
+$("btn-views").addEventListener("click", () => { stopHighlights(); selectView(Math.max(0, activeView)); });
+$("btn-roam").addEventListener("click", startWalk);
+
+$("btn-share").addEventListener("click", async () => {
+  if (state.manifest.provenance === "local") return toast("Local files stay on your device and cannot be shared by link");
+  const url = new URL(location.href);
+  for (const name of ["calibrate", "view"]) url.searchParams.delete(name);
+  if (hasRoomViews() && activeView >= 0) url.searchParams.set("view", activeView);
+  try { await navigator.clipboard.writeText(url.href); toast("Space link copied. Invite someone in."); }
+  catch { toast("Copy the page address from your browser to share this space"); }
+});
+
+$("btn-help").addEventListener("click", () => {
+  stopHighlights();
+  if (state.mode === "walk" || state.mode === "drag") exitWalk(true);
+  $("help-dialog").showModal();
+});
+$("help-close").addEventListener("click", () => $("help-dialog").close());
+$("help-dialog").addEventListener("click", (event) => { if (event.target === $("help-dialog")) { const r = event.target.getBoundingClientRect(); if (event.clientX < r.left || event.clientX > r.right || event.clientY < r.top || event.clientY > r.bottom) event.target.close(); } });
+$("quality").value = String([1, 1.5, 2].includes(maxDpr) ? maxDpr : 1.5);
+$("quality").addEventListener("change", (event) => { maxDpr = Number(event.target.value); onResize(); toast("Display quality updated"); });
+
+for (const button of document.querySelectorAll("[data-move]")) {
+  button.addEventListener("pointerdown", (event) => {
+    event.preventDefault();
+    if (state.mode !== "drag") return;
+    button.setPointerCapture(event.pointerId);
+    state.keys.add(button.dataset.move);
+  });
+  for (const name of ["pointerup", "pointercancel", "lostpointercapture"]) button.addEventListener(name, () => state.keys.delete(button.dataset.move));
+}
+
+function setupRoomMap() {
+  const m = state.manifest;
+  const b = m.bounds;
+  const points = m.walkPolygon || (b ? [[b.min[0], b.min[1]], [b.max[0], b.min[1]], [b.max[0], b.max[1]], [b.min[0], b.max[1]]] : null);
+  if (!points?.length) { mapProject = null; return; }
+  const xs = points.map(p => p[0]), zs = points.map(p => p[1]);
+  const minX = Math.min(...xs), minZ = Math.min(...zs);
+  const width = Math.max(...xs) - minX, depth = Math.max(...zs) - minZ;
+  const scale = Math.min(130 / Math.max(width, 0.01), 80 / Math.max(depth, 0.01));
+  const left = (160 - width * scale) / 2, top = (110 - depth * scale) / 2;
+  mapProject = (x, z) => [left + (x - minX) * scale, top + (z - minZ) * scale];
+  $("map-area").setAttribute("d", points.map(([x, z], i) => `${i ? "L" : "M"}${mapProject(x, z).join(" ")}`).join(" ") + " Z");
+  updateRoomMap();
+}
+
+function updateRoomMap() {
+  if (!mapProject || $("room-map").hidden) return;
+  const [x, z] = mapProject(camera.position.x, camera.position.z);
+  $("map-camera").setAttribute("transform", `translate(${x} ${z}) rotate(${-THREE.MathUtils.radToDeg(state.yaw)})`);
+  $("map-heading").textContent = "↑";
+}
 
 boot();

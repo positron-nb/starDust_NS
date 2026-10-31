@@ -2,14 +2,14 @@
 
 Round 1 submission for **Namma Space, Techfest IIT Bombay 2026–27** (3D Reconstruction & Roaming).
 
-The pipeline turns an ordinary smartphone video of a real indoor room into a photorealistic **3D Gaussian Splatting** model. The model is explored in first person in a **desktop or laptop browser with keyboard and mouse** (WASD + mouse-look), with nothing to install. On touch-only devices the viewer allows drag-to-look and says that walking needs a keyboard; a touch joystick is not part of Round 1.
+The pipeline turns an ordinary smartphone video of a real indoor room into a photorealistic **3D Gaussian Splatting** model. Explore in a **desktop or laptop browser with keyboard and mouse** (WASD + mouse-look), with nothing to install. Touch devices support drag-to-look and on-screen movement arrows.
 
 ```
 phone video ─► frame extraction + quality gate ─► COLMAP SfM poses ─► Splatfacto (nerfstudio/gsplat)
             ─► ns-export gaussian-splat (.ply) ─► splat-transform (.sog, compressed) ─► Spark.js + Three.js viewer ─► static host
 ```
 
-> **Live viewer:** **https://stardust-ns.vercel.app/** shows a real room reconstructed from one smartphone video (2,133,204 Gaussians, 42.9 MiB, cold load ≈ 10 s). **Status (2026-10-29):** pipeline run end to end on Colab; a GPU-COLMAP re-run that registers 326/328 frames (vs 221) is in progress. Measured numbers: [`submission/metrics.md`](submission/metrics.md); open items: [`submission/CHECKLIST.md`](submission/CHECKLIST.md).
+> **Live viewer:** **https://stardust-ns.vercel.app/** uses the room2 reconstruction: 1,703,532 Gaussians, 35.97 MiB SPZ, from a 15:01-minute 4K phone recording. Local GPU COLMAP registered 1,474/1,486 quality-filtered frames (99.2%); Splatfacto trained for 30,000 iterations. The viewer includes saved camera views, highlight playback and touch movement. Current results and team details are in [`submission/technical_abstract.pdf`](submission/technical_abstract.pdf); viewer and repository links are in [`submission/additional_links_and_prototypes.pdf`](submission/additional_links_and_prototypes.pdf). The older measurements and checklist remain in [`submission/metrics.md`](submission/metrics.md) and [`submission/CHECKLIST.md`](submission/CHECKLIST.md) as run history; room2 cold load and sustained FPS have not been benchmarked.
 
 ## Repository layout
 
@@ -48,6 +48,8 @@ npm run dev     # http://localhost:5173
 | `R` | Reset to start pose |
 | `F` / `I` | Fullscreen / technical HUD |
 | `Esc` | Release mouse (pause). The dock's exit button ends the walkthrough. |
+
+The room2 experience also includes **saved viewpoints** (room overview, window and workspace), an optional **highlight slideshow**, a live **walk-boundary map**, and shareable viewpoint links (`?view=0`, `1` or `2`). These are camera views, not obstacle-aware navigation. Use the picture icon in the floating dock to return to the viewpoint gallery. The **?** button opens controls and display-quality settings; local file loading and calibration remain available. Saved room2 views are hidden for other models and in calibration mode.
 
 If the browser refuses pointer lock (for example inside an iframe), the viewer falls back to drag-to-look. URL options: `?calibrate` opens the alignment panel, `?dpr=1` lowers render resolution on weak GPUs, and `?manifest=models/other.json` loads another manifest.
 
