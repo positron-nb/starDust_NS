@@ -136,7 +136,7 @@ code { font-family: var(--mono); font-size: 0.95em; }
   .card { padding: 22px; }
 }
 
-/* Star Dust — an editorial frame around the live room. */
+/* StarDust — an editorial frame around the live room. */
 :root { --bg:#111510; --panel:rgba(22,27,24,.88); --panel-solid:#19201b; --accent:#e5ca97; --accent-ink:#20291f; --muted:#aab2a7; --radius:18px; }
 button, a, select { -webkit-tap-highlight-color:transparent; }
 button:focus-visible, a:focus-visible, select:focus-visible { outline:2px solid var(--accent);outline-offset:5px; }
