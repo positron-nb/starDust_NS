@@ -50,7 +50,7 @@
 <h1><span class="star">✦</span> Star Dust: Smartphone Capture to a Photorealistic Browser Walkthrough</h1>
 <div class="meta">Team Star Dust · Round 1: 3D Reconstruction &amp; Roaming · Live viewer: <a href="https://stardust-ns.vercel.app/">stardust-ns.vercel.app</a> · Code: <a href="https://github.com/positron-nb/starDust_NS">github.com/positron-nb/starDust_NS</a></div>
 
-<div class="key"><b>Result:</b> a new 15:01-minute, 4K smartphone recording (<b>room2</b>) was reconstructed into a <b>1,703,532-Gaussian</b> 3D twin. Local GPU COLMAP registered <b>1,474 of 1,486 frames (99.2%)</b>; Splatfacto trained for 30,000 iterations on Colab. The <b>35.97 MiB SPZ</b> model is explored with WASD and mouse-look. Figure 3 compares source frames with renders at recovered poses.</div>
+<div class="key"><b>Result:</b> a new 15:01-minute, 4K smartphone recording (<b>room2</b>) was reconstructed into a <b>1,296,805-Gaussian</b> 3D twin. Local GPU COLMAP registered <b>1,474 of 1,486 frames (99.2%)</b>; Splatfacto trained for 60,000 iterations locally on the RTX 5060 (WSL2), using all 1,474 registered frames at 1600×900. The <b>29.41 MiB SPZ</b> model is explored with WASD and mouse-look. Figure 3 compares source frames with renders at recovered poses.</div>
 
 <h2>1. Problem and proposed solution</h2>
 <p>A floor plan does not show what a space looks like, and manual 3D modelling does not scale. StarDust is a software-only pipeline:</p>
@@ -77,9 +77,9 @@
     <rect x="420" y="22" width="160" height="76" rx="6" fill="#f3f4fa" stroke="#d9dde4"/>
     <text x="428" y="40" font-weight="600">COLMAP SfM</text><text x="428" y="55">local CUDA: exhaustive</text><text x="428" y="69">or Colab CPU: sequential</text><text x="428" y="83">gate: registered ≥ 70 %</text>
     <rect x="600" y="22" width="152" height="76" rx="6" fill="#f3f4fa" stroke="#d9dde4"/>
-    <text x="608" y="40" font-weight="600">Splatfacto (gsplat)</text><text x="608" y="55">30k iterations, Colab T4</text><text x="608" y="69">init from SfM points</text><text x="608" y="83">ns-export gaussian-splat</text>
+    <text x="608" y="40" font-weight="600">Splatfacto (gsplat)</text><text x="608" y="55">60k, RTX 5060 / WSL2</text><text x="608" y="69">init from SfM points</text><text x="608" y="83">ns-export gaussian-splat</text>
     <rect x="8" y="138" width="290" height="62" rx="6" fill="#f3f4fa" stroke="#d9dde4"/>
-    <text x="16" y="156" font-weight="600">splat-transform → SPZ / SOG (room2: 11.2× smaller)</text><text x="16" y="171">calibrate_from_poses.py: metric scale,</text><text x="16" y="186">floor, start pose, walk outline → manifest</text>
+    <text x="16" y="156" font-weight="600">splat-transform → SPZ / SOG (room2: 10.4× smaller)</text><text x="16" y="171">calibrate_from_poses.py: metric scale,</text><text x="16" y="186">floor, start pose, walk outline → manifest</text>
     <rect x="320" y="138" width="200" height="62" rx="6" fill="#f3f4fa" stroke="#d9dde4"/>
     <text x="328" y="156" font-weight="600">Vercel static hosting</text><text x="328" y="171">auto-deploy on git push</text><text x="328" y="186">public link, no backend</text>
     <rect x="540" y="138" width="212" height="62" rx="6" fill="#eef0ff" stroke="#4338ca"/>
@@ -111,8 +111,8 @@
   <li><b>Frame selection:</b> decode at 6 fps and keep the sharpest frame (variance of Laplacian) in each group of 3, giving 2 fps.</li>
   <li><b>Quality gate:</b> reject blur (&lt; max(40, 0.35 × median)), bad exposure, low texture and near-duplicates (dHash). The run stops if fewer than 40 frames remain.</li>
   <li><b>SfM:</b> COLMAP SIFT. With a local CUDA GPU we use exhaustive matching; on Colab CPU, sequential matching. The run stops if fewer than 70 % of frames register.</li>
-  <li><b>3DGS:</b> <code>ns-train splatfacto</code>, 30k iterations, initialised from SfM points. Then <code>ns-export</code> and compression to SPZ.</li>
-  <li><b>Calibration:</b> COLMAP has no absolute metric scale. Exported splats are aligned to the viewer's y-up coordinates. The room2 manifest sets scale 1.01, floor -1.277, a start pose and a 13-vertex walk boundary. Physical dimensions remain approximate until checked against a measured length.</li>
+  <li><b>3DGS:</b> <code>ns-train splatfacto</code>, 60k iterations on all registered frames at 1600×900, initialised from SfM points. Then <code>ns-export</code> and compression to SPZ.</li>
+  <li><b>Calibration:</b> COLMAP has no absolute metric scale. Exported splats are aligned to the viewer's y-up coordinates. The room2 manifest sets scale 1.010737, floor -1.252304, a start pose and a 17-vertex walk boundary. Physical dimensions remain approximate until checked against a measured length.</li>
 </ol>
 </div>
 </div>
@@ -123,9 +123,9 @@
 <tr><th style="width:15%">Layer</th><th style="width:21%">Choice</th><th>Why (alternatives considered)</th></tr>
 <tr><td>Representation</td><td>3D Gaussian Splatting [1]</td><td>Photoreal, view-dependent appearance at real-time rates in WebGL. NeRF ray marching is too slow for browsers, and meshes (Meshroom) lose thin and glossy detail.</td></tr>
 <tr><td>Poses</td><td>COLMAP [2]</td><td>Reference SfM. Scriptable, gives initial points, and its official CUDA build runs on a laptop GPU. DUSt3R [4] is kept as a fallback for very sparse captures.</td></tr>
-<tr><td>Training</td><td>Splatfacto / gsplat [5, 6]</td><td>One CLI for processing, training and export. About 6 GB of VRAM fits a free T4. Apache-2.0, whereas the original 3DGS code is non-commercial.</td></tr>
+<tr><td>Training</td><td>Splatfacto / gsplat [5, 6]</td><td>One CLI for processing, training and export. The full run uses the local 8 GB RTX 5060 with lossless file-backed uint8 image caches. Apache-2.0, whereas the original 3DGS code is non-commercial.</td></tr>
 <tr><td>Viewer</td><td>Spark 2.3.1 + three.js</td><td>Splats are ordinary three.js objects, so custom FPS controls and future overlays work. Loads PLY, SPZ and SOG. MIT licence.</td></tr>
-<tr><td>Delivery</td><td>SPZ on Vercel</td><td>11.2× smaller than the PLY and decodes on the CPU (SOG needs WebGPU, which Colab lacks). Static hosting with auto-deploy from git.</td></tr>
+<tr><td>Delivery</td><td>SPZ on Vercel</td><td>10.4× smaller than the PLY and decodes on the CPU. The versioned model filename prevents stale browser caches. Static hosting with auto-deploy from git.</td></tr>
 </table>
 
 <h2>5. Reconstruction results (real room, measured)</h2>
@@ -137,14 +137,14 @@
 <tr><td>Capture</td><td>15:01.49, 3840×2160, 30 fps, HEVC</td></tr>
 <tr><td>Frame selection</td><td>5,409 candidates → 1,803 selected → 1,486 pass quality gate; 317 rejected (17.6%)</td></tr>
 <tr><td>COLMAP (local GPU, exhaustive)</td><td>1,474/1,486 registered (99.2%); 326,511 points; 0.653 px mean reprojection error</td></tr>
-<tr><td>Training (Colab)</td><td>30,000 iterations; 4,716 s (78.6 min)</td></tr>
-<tr><td>Exported model</td><td>1,703,532 Gaussians, SH degree 3; PLY 422.48 MB → SPZ 37.72 MB (35.97 MiB)</td></tr>
-<tr><td>Compression / export</td><td>11.2× smaller; export 116 s; SPZ conversion 36 s</td></tr>
-<tr><td>Viewer configuration</td><td>Scale 1.01; floor -1.277; 13-vertex walk boundary; eye height 1.6 viewer units</td></tr>
+<tr><td>Training + PLY export (local WSL2)</td><td>60,000 iterations; all 1,474 frames, 1600×900; 6,723 s (112.1 min), excluding one-time CUDA compilation</td></tr>
+<tr><td>Exported model</td><td>1,296,805 Gaussians, SH degree 3; PLY 321.61 MB → SPZ 30.84 MB (29.41 MiB)</td></tr>
+<tr><td>Compression / export</td><td>10.4× smaller; SPZ conversion 6.6 s locally; zero NaN/Inf Gaussians</td></tr>
+<tr><td>Viewer configuration</td><td>Scale 1.010737; floor -1.252304; 17-vertex walk boundary; eye height 1.6 viewer units</td></tr>
 </table>
 </div>
 </div>
-<figure><img style="width:85%;margin:0 auto" src="img/room2_compare.jpg" alt="Original phone frames next to live viewer renders from the same poses"><figcaption>Figure 3. Matched video-to-walkthrough views. Left: original room2 video frames frame_00260.jpg (02:09.8), frame_00799.jpg (06:39.3). Right: the 3DGS viewer at the corresponding recovered camera pose and camera field of view. Source frames are mapped through the processing-stage renumbering. Soft edges and reconstruction artefacts remain visible; this is a qualitative comparison.</figcaption></figure>
+<figure><img style="width:85%;margin:0 auto" src="img/room2_compare.jpg" alt="Phone frames and full-model walkthrough renders at corresponding recovered poses"><figcaption>Figure 3. Left: source frames frame_00260.jpg (02:09.8) and frame_00799.jpg (06:39.3). Right: the full 60,000-step model at corresponding recovered poses. The walkthrough uses a wider 60° vertical field of view than the source camera (36.6°). UI overlays and soft surface edges remain; this is qualitative evidence.</figcaption></figure>
 <p><b>Room2 reconstruction coverage.</b> Exhaustive matching on the local RTX 5060 produced a main component with 1,474 registered cameras from 1,486 quality-filtered frames. A separate 11-camera component was not used for the submitted training run. High registration improves pose coverage, but does not by itself guarantee sharp surfaces.</p>
 <table>
 <tr><th>Room2 processing stage</th><th>Recorded duration</th></tr>
@@ -153,7 +153,7 @@
 <tr><td>Incremental mapping</td><td>49,976.1 s (13.88 h)</td></tr>
 <tr><td>Import existing COLMAP model on Colab</td><td>63 s (conversion/import; excludes local SfM)</td></tr>
 </table>
-<p class="small">Sources: room2 extract_report.json, quality_summary.json, colmap_gpu_metrics.json, outputs/run_metrics.json and outputs/splat_info.json. Local SfM and Colab import timings are reported separately to avoid presenting the 63 s import as a reconstruction time. Cold network load and sustained walkthrough FPS have not been benchmarked for room2.</p>
+<p class="small">Sources: local SfM reports and <code>submission/room2_full_run.json</code>. The 63 s Colab import is historical. This all-frame fit has no held-out score; cold load and sustained FPS remain unbenchmarked.</p>
 
 <h2>6. Web viewer and interaction design</h2>
 <div class="grid-fig">
@@ -166,7 +166,7 @@
   <li><b>Extras:</b> open or drop any local <code>.spz</code>/<code>.ply</code>/<code>.sog</code> to view it (it never leaves the browser); a <code>?calibrate</code> panel; a technical HUD (FPS, splats, size, load time).</li>
 </ul>
 </div>
-<figure><img src="img/room2_ui.jpg" alt="StarDust viewer start card"><figcaption>Figure 4. Viewer start card (StarDust theme) with the new room2 model loaded.</figcaption></figure>
+<figure><img src="img/room2_ui.jpg" alt="StarDust viewer start card"><figcaption>Figure 4. Viewer start card (StarDust theme) with the full-frame, 60,000-step room2 model loaded.</figcaption></figure>
 </div>
 
 <h2>7. Testing methodology</h2>
@@ -190,7 +190,7 @@
   <li>Room2 has high camera registration, but textureless walls and fine detail still show soft surfaces, floaters and view-dependent artefacts.</li>
   <li>No physical collision: the camera can pass through furniture inside the outline.</li>
   <li>Room2 scale is configured in the manifest; absolute dimensions and navigation distances need validation against a measured reference.</li>
-  <li>Exhaustive SfM is costly: room2 mapping took 13.88 h locally. Colab training also depends on runtime availability.</li>
+  <li>Exhaustive SfM is costly: room2 mapping took 13.88 h locally. The full model is trained locally; the earlier Colab subset was limited by runtime availability.</li>
 </ul>
 <h3>Reproducibility</h3>
 <p>Exact version pins, one script per platform plus a Colab notebook, per-run metrics, documented environment, and sample data in <code>test/</code>. A new room is swapped in through one manifest file.</p>

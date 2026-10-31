@@ -9,6 +9,7 @@ import { ROOM2_VIEWS } from "./viewpoints.js";
 const params = new URLSearchParams(location.search);
 const CALIBRATE = params.has("calibrate");
 const MANIFEST_URL = params.get("manifest") || "models/manifest.json";
+const ROOM2_MODEL_FILES = new Set(["models/room2.spz", "models/room2-full-60k.spz"]);
 let maxDpr = THREE.MathUtils.clamp(Number(params.get("dpr")) || 1.5, 0.5, 2);
 
 const LOOK_SENSITIVITY = 0.0022; // radians per pixel
@@ -123,7 +124,7 @@ async function boot() {
 
 function showModelInfo() {
   const m = state.manifest;
-  ui.modelName.textContent = m.provenance === "reconstruction" && m.file === "models/room2.spz" ? "Room 02 · A captured space" : m.name;
+  ui.modelName.textContent = m.provenance === "reconstruction" && ROOM2_MODEL_FILES.has(m.file) ? "Room 02 · Full 60k reconstruction" : m.name;
   ui.provenance.hidden = false;
   const label = { reconstruction: "Real capture", synthetic: "Synthetic test scene", local: "Local file" };
   ui.provenance.textContent = label[m.provenance] ?? m.provenance;
@@ -751,7 +752,7 @@ function renderJson() { $("c-json").textContent = manifestJson(); }
 
 // ---------- Curated room views & experience controls ----------
 function hasRoomViews() {
-  return !CALIBRATE && state.manifest.provenance === "reconstruction" && state.manifest.file === "models/room2.spz";
+  return !CALIBRATE && state.manifest.provenance === "reconstruction" && ROOM2_MODEL_FILES.has(state.manifest.file);
 }
 
 function configureExperience() {

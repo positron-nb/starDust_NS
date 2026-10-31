@@ -1,3 +1,23 @@
+# Current submitted model: room2 full run (31 Oct 2026)
+
+| Metric | Verified value |
+|---|---|
+| Input / registered / training frames | 1,486 / 1,474 / **all 1,474** |
+| Training | Splatfacto, **60,000 iterations**, original **1600×900** images |
+| Hardware / environment | RTX 5060 Laptop GPU, 8 GB VRAM; WSL2 Ubuntu 22.04; PyTorch 2.7.1+cu128; nerfstudio 1.1.5 / gsplat 1.4.0 |
+| Image cache | Lossless uint8 arrays on disk, memory mapped; original Nerfstudio undistortion |
+| Training + PLY export wall time | 6,723 s (112.1 min), 15:43:42–17:35:45 IST; one-time CUDA compilation excluded |
+| Final checkpoint / Gaussians | step 59,999 (zero-based); 1,495,923 Gaussians |
+| Export | 1,296,805 Gaussians; 199,118 low-opacity entries filtered; 0 NaN/Inf |
+| PLY / SPZ | 321,609,234 / 30,843,929 bytes; 10.427× smaller; SPZ conversion 6.6 s |
+| Calibration | Scale 1.010737; floor -1.252304; 17-vertex camera-path walk outline. Metric scale assumes 1.3 m median camera height and remains approximate. |
+| Evaluation | All registered cameras used for the final fit; no held-out quality score. Matched source/render views are qualitative evidence. |
+| Evidence | `submission/room2_full_run.json`; final training log and PLY summary; browser views updated to the full model |
+
+## Historical runs (superseded)
+
+The measurements below are retained as history. They do not describe the currently submitted room2 model.
+
 # Measured metrics
 
 Rule: only numbers that were actually measured go here. Every value has a source file or measurement method. `PENDING` means the measurement has not been made yet.

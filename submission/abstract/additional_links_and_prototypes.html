@@ -15,11 +15,12 @@
 <h2>01 &nbsp; Live web viewer</h2>
 <div class="url"><a href="https://stardust-ns.vercel.app/">https://stardust-ns.vercel.app/</a></div>
 <p>Open on a desktop or laptop browser. Wait for loading, then click <b>Start walkthrough</b>. Use <b>WASD</b> or arrow keys to walk, the <b>mouse</b> to look, <b>Shift</b> to move faster, <b>Q/E</b> to adjust eye height, <b>R</b> to reset and <b>Esc</b> to release the mouse.</p>
+<p class="note">Current prototype: full room2 reconstruction, all 1,474 registered frames at 1600×900, 60,000 training steps; 1,296,805 exported Gaussians and a 29.41 MiB SPZ model.</p>
 <h2>02 &nbsp; Code repository &amp; reconstruction setup</h2>
 <div class="url"><a href="https://github.com/positron-nb/starDust_NS">https://github.com/positron-nb/starDust_NS</a></div>
-<p>Branch: <b>main</b>. <code>README.md</code> contains viewer setup and reconstruction instructions; <code>capture_sop.md</code> describes data collection. The notebook <code>notebooks/namma_space_colab.ipynb</code> runs the reconstruction pipeline on a hosted GPU.</p>
+<p>Branch: <b>main</b>. <code>README.md</code> contains viewer setup and reconstruction instructions; <code>capture_sop.md</code> describes data collection. The submitted model was trained locally in WSL2 on an RTX 5060. <code>scripts/train_file_backed.py</code> provides the memory-mapped image cache; <code>docs/local_full_training.md</code> documents the tested settings. The Colab notebook remains an alternative.</p>
 <p class="note">Sample data: <code>test/sample_data/</code>. Usage: <code>test/README.md</code>.</p>
 <h2>03 &nbsp; Submission folder</h2>
 <div class="url"><a href="https://drive.google.com/drive/folders/17erIqZJBRfdBJkza_zMT-XNjzyQLLuHW">Open the Round 1 Google Drive folder</a></div>
-<p class="note">Technical abstract: <b>01_Technical_Abstract.pdf</b> - system architecture, capture SOP, reconstruction methodology and results.</p>
+<p class="note">Technical abstract: <b>01_Technical_Abstract.pdf</b> - system architecture, capture SOP, full-frame reconstruction results and updated screenshots. The folder also includes the current source-code ZIP and the model/run-output ZIP.</p>
 </body></html>

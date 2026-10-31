@@ -52,6 +52,20 @@ def dataparser_transform(poses: np.ndarray) -> tuple[np.ndarray, float]:
     return transform, scale
 
 
+def processed_pose_transform(dataparser: dict, metadata: dict) -> np.ndarray:
+    """Map processed poses to training coordinates without applying preprocessing twice.
+
+    Nerfstudio saves its transform composed with transforms.json's applied_transform,
+    while the frame matrices in that JSON already include applied_transform.
+    """
+    transform = np.array(dataparser["transform"], dtype=np.float64)
+    if "applied_transform" in metadata:
+        applied = np.eye(4)
+        applied[:3] = np.array(metadata["applied_transform"], dtype=np.float64)
+        transform = transform @ np.linalg.inv(applied)
+    return transform
+
+
 def convex_hull(points: np.ndarray) -> np.ndarray:
     """Andrew's monotone chain; returns hull vertices counter-clockwise."""
     pts = sorted(map(tuple, points))
@@ -99,13 +113,14 @@ def main() -> int:
     ap.add_argument("--margin", type=float, default=0.25, help="grow the walk outline by this many metres")
     args = ap.parse_args()
 
-    frames = json.loads(args.transforms.read_text())["frames"]
+    metadata = json.loads(args.transforms.read_text())
+    frames = metadata["frames"]
     frames.sort(key=lambda f: f["file_path"])  # capture order (frame_00001, ...)
     poses = np.array([f["transform_matrix"] for f in frames], dtype=np.float64)
 
     if args.dataparser:
         dp = json.loads(args.dataparser.read_text())
-        transform, scale = np.array(dp["transform"], dtype=np.float64), float(dp["scale"])
+        transform, scale = processed_pose_transform(dp, metadata), float(dp["scale"])
         source = "dataparser_transforms.json"
     else:
         transform, scale = dataparser_transform(poses)
